@@ -1,6 +1,4 @@
 import os
-import random
-
 # Wyłącz warningi Transformers
 os.environ["TRANSFORMERS_VERBOSITY"] = "error"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -10,6 +8,7 @@ from PIL import Image
 import pandas as pd
 import torch
 import clip
+import json
 import jsonschema
 from transformers import pipeline
 from transformers.pipelines import TextGenerationPipeline
@@ -26,7 +25,6 @@ def load_metadata():
     return df, profile_map
 
 df, profile_map = load_metadata()
-BREEDS = sorted(df.breed.unique())
 
 # 3) Ładowanie CLIP
 @st.cache_resource
@@ -36,6 +34,7 @@ def load_clip(device):
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 clip_model, clip_preprocess = load_clip(device)
+BREEDS = sorted(df.breed.unique())
 
 # 4) Precompute text embeddings
 @st.cache_resource
@@ -57,16 +56,13 @@ RESPONSE_SCHEMA = {
     "required": ["Rasa", "Opis"]
 }
 
-# 6) Inicjalizacja generatora HF z GPT-Neo 125M (sampling enabled)
+# 6) Inicjalizacja generatora HF z GPT-Neo 125M
 @st.cache_resource
 def get_generator() -> TextGenerationPipeline:
     return pipeline(
         "text-generation",
         model="EleutherAI/gpt-neo-125M",
-        do_sample=True,
-        temperature=0.6,
-        top_k=30,
-        top_p=0.85,
+        do_sample=False,
         truncation=True
     )
 
@@ -82,47 +78,43 @@ def classify_image(img: Image.Image):
     idx = sims.argmax().item()
     return BREEDS[idx]
 
-# 8) Retrieval + generowanie opisu w formie 5 przymiotników
+# 8) Retrieval + generowanie opisu
 def retrieve_and_generate(breed: str):
-    raw_docs = profile_map.get(breed, [])
-    # wybierz wszystkie niepuste snippet’y spoza placeholderów
-    valid = [
-        d.strip() for d in raw_docs
-        if isinstance(d, str) and d.strip() and "combination of the two" not in d.lower()
-    ]
+    # Pobierz top-3 snippetów
+    docs_list = profile_map.get(breed, [])
+    docs = [d for d in docs_list if isinstance(d, str) and d.strip()][:3]
 
-    # jeśli brak wartościowych snippetów, przejdź do prompta bez fragmentu
-    if valid:
-        snippet = random.choice(valid)
+    # Zbuduj prompt
+    if docs:
+        snippets = "\n".join(f"- {d}" for d in docs)
         prompt = (
             f"Breed: {breed}\n"
-            "Here is one key fact about this breed:\n"
-            f"- {snippet}\n\n"
-            "Provide exactly 5 adjectives (in English) that best describe this breed’s temperament, "
-            "separated by commas. Do not echo the fact, do not repeat adjectives, and do not write anything else.\n"
+            "Provide a detailed, 3-sentence description of the temperament "
+            "and needs of this dog breed based on the following snippets:\n"
+            f"{snippets}\n"
         )
     else:
-        # fallback: samą rasę
         prompt = (
             f"Breed: {breed}\n"
-            "Provide exactly 5 adjectives (in English) that best describe this breed’s temperament, "
-            "separated by commas. Do not write anything else.\n"
+            "Provide a detailed, 3-sentence description of the temperament "
+            "and needs of this dog breed based on your general canine knowledge.\n"
         )
 
     # Generuj
-    out = generator(prompt, max_new_tokens=50)
+    out = generator(prompt, max_new_tokens=80)
     text = out[0].get("generated_text") or out[0].get("text", "")
 
-    # Usuń echo prompta
+    # Usuń echo prompta, jeśli wystąpiło
     if text.startswith(prompt):
         text = text[len(prompt):].lstrip()
 
-    # Weź pierwszą linię i rozdziel przecinkami
-    line = text.splitlines()[0]
-    parts = [a.strip().rstrip('.') for a in line.split(',') if a.strip()]
-    top5 = parts[:5]
+    # Weź pierwsze 3 zdania
+    sentences = [s.strip() for s in text.split('.') if s.strip()]
+    first_three = '. '.join(sentences[:3])
+    if first_three and not first_three.endswith('.'):
+        first_three += '.'
 
-    result = {"Rasa": breed, "Opis": ", ".join(top5)}
+    result = {"Rasa": breed, "Opis": first_three}
     jsonschema.validate(instance=result, schema=RESPONSE_SCHEMA)
     return result
 
@@ -138,7 +130,7 @@ if uploaded:
         breed = classify_image(img)
     st.write(f"**Breed:** {breed}")
 
-    with st.spinner("Generating temperament adjectives..."):
+    with st.spinner("Generating description..."):
         result = retrieve_and_generate(breed)
 
     st.markdown("### Description")

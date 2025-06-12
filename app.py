@@ -82,29 +82,40 @@ def classify_image(img: Image.Image):
 
 # 8) Retrieval + generowanie opisu z GPT-Neo-125M
 def retrieve_and_generate(breed: str):
+    # 1) Pobierz top-3 snippetów (filtrując NaN/puste)
     raw_docs = profile_map.get(breed, [])
     docs = [d for d in raw_docs if isinstance(d, str) and d.strip()][:3]
-    if not docs:
-        docs = [f"No profile snippets available for {breed}."]
 
+    # 2) Jeśli nie ma żadnych snippetów, użyj prompta ogólnego
+    if docs:
+        snippets = "\n".join(f"- {d}" for d in docs)
+        prompt = (
+            f"Breed: {breed}\n"
+            "Provide a detailed, 3-sentence description of the temperament and needs of this dog breed based on the following information:\n"
+            f"{snippets}\n"
+        )
+    else:
+        # fallback: generuj z wiedzy modelu
+        prompt = (
+            f"Breed: {breed}\n"
+            "Provide a detailed, 3-sentence description of the temperament and needs of this dog breed based on your general canine knowledge.\n"
+        )
+
+    # 3) Przygotuj źródła (mogą być puste)
     raw_srcs = source_map.get(breed, [])
     sources = [s for s in raw_srcs if isinstance(s, str) and s.strip()][:3]
 
-    snippets = "\n".join(f"- {d}" for d in docs)
-    prompt = (
-        f"Breed: {breed}\n"
-        "Provide a detailed, 3-sentence description of the temperament and needs of this dog breed based on the following snippets:\n"
-        f"{snippets}\n"
-    )
-
+    # 4) Generacja przez GPT-Neo
     out = generator(prompt, max_new_tokens=80)
     text = out[0].get("generated_text") or out[0].get("text", "")
 
+    # 5) Wyciągnij pierwsze 3 zdania
     sentences = [s.strip() for s in text.split('.') if s.strip()]
     first_three = '. '.join(sentences[:3])
     if first_three and not first_three.endswith('.'):
         first_three += '.'
 
+    # 6) Zbuduj i zwaliduj wynik
     result = {"Rasa": breed, "Opis": first_three, "Źródła": sources}
     jsonschema.validate(instance=result, schema=RESPONSE_SCHEMA)
     return result, sources

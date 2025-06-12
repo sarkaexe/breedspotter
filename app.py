@@ -1,3 +1,8 @@
+import os
+# Wyłącz warningi Transformers
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 import streamlit as st
 from PIL import Image
 import pandas as pd
@@ -32,7 +37,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 clip_model, clip_preprocess = load_clip(device)
 BREEDS = sorted(df.breed.unique())
 
-# 4) Precompute embeddings tekstowe ras
+# 4) Precompute text embeddings
 @st.cache_resource
 def embed_breeds(breeds):
     with torch.no_grad():
@@ -53,7 +58,7 @@ RESPONSE_SCHEMA = {
     "required": ["Rasa", "Opis", "Źródła"]
 }
 
-# 6) Inicjalizacja generatora HF z GPT-Neo 125M i truncation
+# 6) Inicjalizacja generatora HF z GPT-Neo 125M
 @st.cache_resource
 def get_generator() -> TextGenerationPipeline:
     return pipeline(
@@ -77,29 +82,24 @@ def classify_image(img: Image.Image):
 
 # 8) Retrieval + generowanie opisu z GPT-Neo-125M
 def retrieve_and_generate(breed: str):
-    # Pobierz top-3 snippetów (filtrując nan/puste)
     raw_docs = profile_map.get(breed, [])
     docs = [d for d in raw_docs if isinstance(d, str) and d.strip()][:3]
     if not docs:
         docs = [f"No profile snippets available for {breed}."]
 
-    # Pobierz i przefiltruj źródła
     raw_srcs = source_map.get(breed, [])
     sources = [s for s in raw_srcs if isinstance(s, str) and s.strip()][:3]
 
-    # Zbuduj prompt
     snippets = "\n".join(f"- {d}" for d in docs)
     prompt = (
         f"Breed: {breed}\n"
-        "Provide a detailed, 3-sentence description of the temperament and needs of this dog breed based on the following information:\n"
+        "Provide a detailed, 3-sentence description of the temperament and needs of this dog breed based on the following snippets:\n"
         f"{snippets}\n"
     )
 
-    # Generuj tylko z max_new_tokens
     out = generator(prompt, max_new_tokens=80)
     text = out[0].get("generated_text") or out[0].get("text", "")
 
-    # Weź pierwsze 3 zdania
     sentences = [s.strip() for s in text.split('.') if s.strip()]
     first_three = '. '.join(sentences[:3])
     if first_three and not first_three.endswith('.'):

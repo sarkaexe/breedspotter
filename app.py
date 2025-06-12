@@ -77,7 +77,7 @@ def classify_image(img: Image.Image):
     idx = sims.argmax().item()
     return BREEDS[idx]
 
-# 8) Retrieval + generowanie opisu (1 zdanie, max 20 słów)
+# 8) Retrieval + generowanie opisu (1 zdanie, max 20 unikalnych słów)
 def retrieve_and_generate(breed: str):
     # Pobierz top-3 snippets
     docs_list = profile_map.get(breed, [])
@@ -110,9 +110,20 @@ def retrieve_and_generate(breed: str):
     # Wyciągnij pierwsze zdanie
     sentence = text.split(".", 1)[0].strip()
 
-    # Ogranicz do 20 słów
-    words = sentence.split()
-    short = " ".join(words[:20])
+    # Podziel na słowa i zostaw maks. 20
+    raw_words = sentence.split()[:20]
+
+    # Usuń duplikaty, zachowując pierwsze wystąpienie
+    seen = set()
+    unique = []
+    for w in raw_words:
+        key = w.lower().strip(".,!?:;\"'")
+        if key and key not in seen:
+            seen.add(key)
+            unique.append(w)
+
+    # Złóż zdanie i dodaj kropkę
+    short = " ".join(unique)
     if short and not short.endswith("."):
         short += "."
 
@@ -134,6 +145,10 @@ if uploaded:
 
     with st.spinner("Generating description..."):
         result = retrieve_and_generate(breed)
+
+    st.markdown("### Description")
+    st.write(result["Opis"])
+
 
     st.markdown("### Description")
     st.write(result["Opis"])

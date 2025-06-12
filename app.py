@@ -3,23 +3,23 @@ from PIL import Image
 import pandas as pd
 import torch
 import torch.nn.functional as F
-from transformers import CLIPProcessor, CLIPModel
+import clip                                 # from openai/CLIP
 import chromadb
 from chromadb.config import Settings
 import openai
 import json
 import jsonschema
 
-# --- 1. Load metadata ---
+# 1) Metadata
 @st.cache_resource
 def load_metadata():
-    df = pd.read_csv("stanford_dogs_metadata.csv")  # filepath, breed
-    prof = pd.read_csv("breeds_profiles.csv")       # breed, text, source
+    df = pd.read_csv("stanford_dogs_metadata.csv")
+    prof = pd.read_csv("breeds_profiles.csv")
     return df, prof
 
 df, prof = load_metadata()
 
-# --- 2. Initialize ChromaDB ---
+# 2) ChromaDB
 @st.cache_resource
 def init_chroma(prof_df):
     client = chromadb.Client(Settings(
@@ -38,52 +38,53 @@ def init_chroma(prof_df):
 
 chroma = init_chroma(prof)
 
-# --- 3. CLIP setup ---
+# 3) Load CLIP
 @st.cache_resource
-def load_clip():
-    model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
-    processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
-    return model, processor
+def load_clip_model(device):
+    model, preprocess = clip.load("ViT-B/32", device=device, jit=False)
+    return model, preprocess
 
-clip_model, clip_processor = load_clip()
+device = "cuda" if torch.cuda.is_available() else "cpu"
+clip_model, clip_preprocess = load_clip_model(device)
 BREEDS = sorted(df.breed.unique())
 
+# Precompute text embeddings
 @st.cache_resource
 def embed_breeds(breeds):
-    inp = clip_processor(text=breeds, return_tensors="pt", padding=True)
-    emb = clip_model.get_text_features(**inp)
-    return emb / emb.norm(p=2, dim=-1, keepdim=True)
+    with torch.no_grad():
+        text_tokens = clip.tokenize(breeds).to(device)
+        text_emb = clip_model.encode_text(text_tokens)
+        return text_emb / text_emb.norm(dim=-1, keepdim=True)
 
 breed_embeddings = embed_breeds(BREEDS)
 
-# --- 4. JSON schema for response validation ---
+# 4) Response schema
 RESPONSE_SCHEMA = {
     "type": "object",
     "properties": {
-        "Rasa":    {"type": "string"},
+        "Rasa": {"type": "string"},
         "Pewność": {"type": "string", "pattern": "^\\d{1,3}%$"},
-        "Opis":    {"type": "string"},
-        "Źródła":  {"type": "array", "items": {"type": "string"}}
+        "Opis": {"type": "string"},
+        "Źródła": {"type": "array", "items": {"type": "string"}}
     },
     "required": ["Rasa", "Pewność", "Opis", "Źródła"]
 }
 
-# Set OpenAI API key from secrets
+# OpenAI key
 openai.api_key = st.secrets.get("openai_api_key")
 
-# Classification function
+# 5) Classification
 def classify_image(img: Image.Image):
-    img = img.resize((224, 224))
-    inp = clip_processor(images=img, return_tensors="pt")
-    emb_i = clip_model.get_image_features(**inp)
-    emb_i = emb_i / emb_i.norm(p=2, dim=-1, keepdim=True)
-    sims = (emb_i @ breed_embeddings.T).squeeze(0)
-    idx = sims.argmax().item()
-    confidence = sims[idx].item() * 100
-    return BREEDS[idx], confidence
+    img_input = clip_preprocess(img).unsqueeze(0).to(device)
+    with torch.no_grad():
+        img_emb = clip_model.encode_image(img_input)
+        img_emb = img_emb / img_emb.norm(dim=-1, keepdim=True)
+        sims = (img_emb @ breed_embeddings.T).squeeze(0)
+    score, idx = sims.max().item(), sims.argmax().item()
+    return BREEDS[idx], score * 100
 
-# Retrieval + OpenAI generation
-def retrieve_and_generate(breed: str, conf: float):
+# 6) Retrieval + generation
+def retrieve_and_generate(breed, conf):
     if conf < 50:
         return None, False, []
     res = chroma.query(
@@ -93,11 +94,14 @@ def retrieve_and_generate(breed: str, conf: float):
     sources = [md["source"] for md in res["metadatas"][0]]
     prompt = (
         f"Zidentyfikowano rasę: {breed} ({conf:.1f}%).\n"
-        "Na podstawie poniższych fragmentów opisz temperament i potrzeby tej rasy w formie JSON z polami Rasa, Pewność, Opis, Źródła."
-        "\nFragmenty:\n" + "\n".join(docs)
+        "Na podstawie poniższych fragmentów opisz temperament i potrzeby tej rasy"
+        " w formie JSON z polami Rasa, Pewność, Opis, Źródła:\n" +
+        "\n".join(docs)
     )
     resp = openai.ChatCompletion.create(
-        model="gpt-4", messages=[{"role": "user", "content": prompt}], temperature=0.2
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.2
     )
     text = resp.choices[0].message.content
     try:
@@ -107,11 +111,11 @@ def retrieve_and_generate(breed: str, conf: float):
     except Exception:
         return text, False, sources
 
-# --- 5. Streamlit UI ---
+# 7) Streamlit UI
 st.set_page_config(page_title="🐶 BreedSpotter", layout="centered")
 st.title("🐶 BreedSpotter — Rozpoznawanie ras psów")
 
-uploaded = st.file_uploader("Wgraj zdjęcie psa", type=["jpg", "jpeg", "png"])
+uploaded = st.file_uploader("Wgraj zdjęcie psa", type=["jpg","jpeg","png"])
 if uploaded:
     img = Image.open(uploaded).convert("RGB")
     st.image(img, caption="Twoje zdjęcie", use_column_width=True)
@@ -123,12 +127,13 @@ if uploaded:
         st.warning("Nie jestem pewien – podaj lepsze zdjęcie.")
     else:
         with st.spinner("Generowanie opisu..."):
-            result, valid, sources = retrieve_and_generate(breed, conf)
+            result, valid, srcs = retrieve_and_generate(breed, conf)
         if not valid:
             st.error("Nie udało się zwalidować odpowiedzi.")
         else:
             st.markdown("### Opis temperamentu i potrzeb")
-            st.write(result.get("Opis") if isinstance(result, dict) else result)
+            st.write(result["Opis"] if isinstance(result, dict) else result)
             st.markdown("#### Źródła")
-            for s in sources:
+            for s in srcs:
                 st.write(f"- {s}")
+

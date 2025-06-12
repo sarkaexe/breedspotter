@@ -4,6 +4,7 @@ torchvision==0.22.1
 transformers==4.32.0
 chromadb==0.4.3
 codecov==2.1.13
+tokenizers==0.13.3
 pillow
 pandas
 ftfy

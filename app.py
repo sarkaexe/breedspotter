@@ -43,10 +43,9 @@ breed_embeddings = embed_texts(BREEDS)
 detector_texts = ["a photo of a dog", "not a dog"]
 detector_embeddings = embed_texts(detector_texts)
 
-# --- 3. Initialize Hugging Face Llama generator ---
+# --- 3. Initialize Hugging Face Llama-2 pipeline ---
 @st.cache_resource
 def get_generator():
-    # Load Llama-2 7B chat model for text generation
     return pipeline(
         "text-generation",
         model="meta-llama/Llama-2-7b-chat-hf",
@@ -57,7 +56,7 @@ def get_generator():
     )
 generator = get_generator()
 
-# JSON schema for output
+# JSON schema for output validation
 RESPONSE_SCHEMA = {
     "type": "object",
     "properties": {
@@ -87,32 +86,23 @@ def classify_image(img: Image.Image) -> str:
     idx = sims.argmax().item()
     return BREEDS[idx]
 
-# --- 6. Generation using HF pipeline ---
+# --- 6. Generation using Llama-2 pipeline ---
 @st.cache_data(show_spinner=False)
 def retrieve_and_generate(breed: str):
     docs = profile_map.get(breed, [])[:2]
     sources = source_map.get(breed, [])[:2]
-    # Filter out non-string or NaN sources
     sources = [str(s) for s in sources if isinstance(s, str) and s.strip()]
-    # Build snippets from docs
-    snippets = "
-".join(f"- {d}" for d in docs)
-    # Single f-string prompt to avoid syntax issues
-    prompt = (
-        f"Breed: {breed}.
-"
-        f"Describe the temperament and needs of this breed based on the following snippets:
-{snippets}"
-    )
-    # Generate text with HF pipeline
-    out = generator(prompt, max_length=len(prompt.split()) + 60, do_sample=False)
+    snippets = "\n".join(f"- {d}" for d in docs)
+    prompt = f"""Breed: {breed}.
+Describe the temperament and needs of this breed based on the following snippets:
+{snippets}"""
+    out = generator(prompt)
     text = out[0]["generated_text"]
     result = {"Rasa": breed, "Opis": text.strip(), "Źródła": sources}
-    # Validate
     jsonschema.validate(instance=result, schema=RESPONSE_SCHEMA)
     return result, sources
 
-# --- 7. Streamlit UI --- Streamlit UI ---
+# --- 7. Streamlit UI ---
 st.title("🐶 BreedSpotter — Dog breed recognition")
 
 uploaded = st.file_uploader("Upload a photo", type=["jpg","jpeg","png"])
@@ -132,3 +122,4 @@ if uploaded:
         st.markdown("#### Sources")
         for s in srcs:
             st.write(f"- {s}")
+

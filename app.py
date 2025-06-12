@@ -75,7 +75,7 @@ def retrieve_and_generate(breed):
         "w formie JSON z polami Rasa, Opis, Źródła:\n"
         + "\n".join(str(d) for d in docs)
     )
-    resp = openai.ChatCompletion.create(
+    resp = openai.chat.completions.create(
         model="gpt-4", messages=[{"role": "user", "content": prompt}], temperature=0.2
     )
     text = resp.choices[0].message.content

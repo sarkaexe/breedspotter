@@ -3,9 +3,9 @@ from PIL import Image
 import pandas as pd
 import torch
 import clip  # openai/CLIP
-import openai
-import json
+from transformers import pipeline
 import jsonschema
+import json
 
 # Page config must be first Streamlit command
 st.set_page_config(page_title="🐶 BreedSpotter", layout="centered")
@@ -43,19 +43,27 @@ breed_embeddings = embed_texts(BREEDS)
 detector_texts = ["a photo of a dog", "not a dog"]
 detector_embeddings = embed_texts(detector_texts)
 
-# --- 3. JSON schema for response validation ---
+# --- 3. Initialize Hugging Face generator ---
+@st.cache_resource
+def get_generator():
+    return pipeline(
+        "text-generation",
+        model="distilgpt2",
+        device=0 if torch.cuda.is_available() else -1,
+        return_full_text=False
+    )
+generator = get_generator()
+
+# JSON schema for output
 RESPONSE_SCHEMA = {
     "type": "object",
     "properties": {
-        "Rasa":    {"type": "string"},
-        "Opis":    {"type": "string"},
-        "Źródła":  {"type": "array", "items": {"type": "string"}}
+        "Rasa": {"type": "string"},
+        "Opis": {"type": "string"},
+        "Źródła": {"type": "array", "items": {"type": "string"}}
     },
     "required": ["Rasa", "Opis", "Źródła"]
 }
-
-# Set OpenAI API key
-openai.api_key = st.secrets.get("openai_api_key")
 
 # --- 4. Detection function ---
 def is_dog(img: Image.Image) -> bool:
@@ -76,28 +84,21 @@ def classify_image(img: Image.Image) -> str:
     idx = sims.argmax().item()
     return BREEDS[idx]
 
-# --- 6. Retrieval + generation using caching and cheaper model ---
+# --- 6. Generation using HF pipeline ---
 @st.cache_data(show_spinner=False)
 def retrieve_and_generate(breed: str):
     docs = profile_map.get(breed, [])[:2]
     sources = source_map.get(breed, [])[:2]
     prompt = (
-        f"Zidentyfikowano rasę: {breed}.\n"
-        "Opisz temperament i potrzeby tej rasy bazując na poniższych fragmentach:\n"
+        f"Breed: {breed}.\nDescribe the temperament and needs of this breed based on:\n"
         + "\n".join(f"- {d}" for d in docs)
     )
-    resp = openai.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0
-    )
-    text = resp.choices[0].message.content
-    try:
-        data = json.loads(text)
-        jsonschema.validate(instance=data, schema=RESPONSE_SCHEMA)
-        return data, sources
-    except Exception:
-        return {"Rasa": breed, "Opis": text, "Źródła": sources}, sources
+    out = generator(prompt, max_length=len(prompt.split()) + 60, do_sample=False)
+    text = out[0]["generated_text"]
+    result = {"Rasa": breed, "Opis": text.strip(), "Źródła": sources}
+    # Validate
+    jsonschema.validate(instance=result, schema=RESPONSE_SCHEMA)
+    return result, sources
 
 # --- 7. Streamlit UI ---
 st.title("🐶 BreedSpotter — Dog breed recognition")
@@ -112,21 +113,11 @@ if uploaded:
         with st.spinner("Classifying breed..."):
             breed = classify_image(img)
         st.write(f"**Breed:** {breed}")
-        # Generate description with error handling
-        try:
-            with st.spinner("Generating description..."):
-                result, srcs = retrieve_and_generate(breed)
-        except Exception as e:
-            msg = str(e)
-            if 'quota' in msg.lower():
-                st.error("API rate limit exceeded or insufficient quota. Please check your OpenAI billing.")
-            elif 'invalid api key' in msg.lower() or 'authentication' in msg.lower():
-                st.error("OpenAI API key is not configured or invalid. Please set it in Streamlit Secrets.")
-            else:
-                st.error(f"An error occurred: {msg}")
-        else:
-            st.markdown("### Description")
-            st.write(result.get("Opis"))
-            st.markdown("#### Sources")
-            for s in srcs:
-                st.write(f"- {s}")
+        with st.spinner("Generating description..."):
+            result, srcs = retrieve_and_generate(breed)
+        st.markdown("### Description")
+        st.write(result["Opis"])
+        st.markdown("#### Sources")
+        for s in srcs:
+            st.write(f"- {s}")
+

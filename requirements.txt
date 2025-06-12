@@ -8,3 +8,5 @@ pillow
 pandas
 ftfy
 regex
+transformers
+tokenizers

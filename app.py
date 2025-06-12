@@ -99,5 +99,4 @@ if uploaded:
     with st.spinner("Rozpoznawanie rasy..."):
         breed, conf = classify_image(img)
     st.write(f"**Rasa:** {breed}")
-    st.write(f"**Pewność:** {conf:.1f}%")
 

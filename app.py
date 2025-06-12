@@ -82,40 +82,44 @@ def classify_image(img: Image.Image):
     idx = sims.argmax().item()
     return BREEDS[idx]
 
-# 8) Retrieval + generowanie opisu w formie 5 unikalnych przymiotników
+# 8) Retrieval + generowanie opisu w formie 5 przymiotników
 def retrieve_and_generate(breed: str):
-    # Pobierz wszystkie snippet’y dla tej rasy
     raw_docs = profile_map.get(breed, [])
-    # Przefiltruj puste oraz placeholderowe („combination of the two”)
+    # wybierz wszystkie niepuste snippet’y spoza placeholderów
     valid = [
         d.strip() for d in raw_docs
         if isinstance(d, str) and d.strip() and "combination of the two" not in d.lower()
     ]
-    if not valid:
-        valid = [d.strip() for d in raw_docs if isinstance(d, str) and d.strip()]
-    # Wylosuj jeden snippet
-    snippet = random.choice(valid) if valid else ""
 
-    # Prompt proszący o 5 przymiotników
-    prompt = (
-        f"Breed: {breed}\n"
-        "Here is one key fact about this breed:\n"
-        f"- {snippet}\n\n"
-        "Provide exactly 5 adjectives (in English) that best describe this breed’s temperament, "
-        "separated by commas. Do not echo the fact, do not repeat adjectives, and do not write anything else.\n"
-    )
+    # jeśli brak wartościowych snippetów, przejdź do prompta bez fragmentu
+    if valid:
+        snippet = random.choice(valid)
+        prompt = (
+            f"Breed: {breed}\n"
+            "Here is one key fact about this breed:\n"
+            f"- {snippet}\n\n"
+            "Provide exactly 5 adjectives (in English) that best describe this breed’s temperament, "
+            "separated by commas. Do not echo the fact, do not repeat adjectives, and do not write anything else.\n"
+        )
+    else:
+        # fallback: samą rasę
+        prompt = (
+            f"Breed: {breed}\n"
+            "Provide exactly 5 adjectives (in English) that best describe this breed’s temperament, "
+            "separated by commas. Do not write anything else.\n"
+        )
 
     # Generuj
     out = generator(prompt, max_new_tokens=50)
     text = out[0].get("generated_text") or out[0].get("text", "")
 
-    # Usuń echo prompta, jeśli wystąpiło
+    # Usuń echo prompta
     if text.startswith(prompt):
         text = text[len(prompt):].lstrip()
 
-    # Wyciągnij pierwszą linię z listą przymiotników
-    adjectives_line = text.splitlines()[0]
-    parts = [a.strip().rstrip('.') for a in adjectives_line.split(',') if a.strip()]
+    # Weź pierwszą linię i rozdziel przecinkami
+    line = text.splitlines()[0]
+    parts = [a.strip().rstrip('.') for a in line.split(',') if a.strip()]
     top5 = parts[:5]
 
     result = {"Rasa": breed, "Opis": ", ".join(top5)}
@@ -139,3 +143,4 @@ if uploaded:
 
     st.markdown("### Description")
     st.write(result["Opis"])
+

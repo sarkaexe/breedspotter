@@ -74,8 +74,6 @@ def retrieve_and_generate(breed, conf):
     sources = source_map.get(breed, [])[:3]
     prompt = (
         f"Zidentyfikowano rasę: {breed} ({conf:.1f}%).\n"
-        "Na podstawie poniższych fragmentów opisz temperament i potrzeby tej rasy "
-        "w formie JSON z polami Rasa, Pewność, Opis, Źródła:\n" +
         "\n".join(str(d) for d in docs)
     )
     resp = openai.ChatCompletion.create(

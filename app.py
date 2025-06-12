@@ -1,4 +1,6 @@
 import os
+import random
+
 # Wyłącz warningi Transformers
 os.environ["TRANSFORMERS_VERBOSITY"] = "error"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -80,15 +82,19 @@ def classify_image(img: Image.Image):
     idx = sims.argmax().item()
     return BREEDS[idx]
 
-# 8) Retrieval + generowanie opisu w formie 5 przymiotników
+# 8) Retrieval + generowanie opisu w formie 5 unikalnych przymiotników
 def retrieve_and_generate(breed: str):
-    # Pobierz top-1 snippet
+    # Pobierz wszystkie snippet’y dla tej rasy
     raw_docs = profile_map.get(breed, [])
-    snippet = ""
-    for d in raw_docs:
-        if isinstance(d, str) and d.strip():
-            snippet = d
-            break
+    # Przefiltruj puste oraz placeholderowe („combination of the two”)
+    valid = [
+        d.strip() for d in raw_docs
+        if isinstance(d, str) and d.strip() and "combination of the two" not in d.lower()
+    ]
+    if not valid:
+        valid = [d.strip() for d in raw_docs if isinstance(d, str) and d.strip()]
+    # Wylosuj jeden snippet
+    snippet = random.choice(valid) if valid else ""
 
     # Prompt proszący o 5 przymiotników
     prompt = (
@@ -96,7 +102,7 @@ def retrieve_and_generate(breed: str):
         "Here is one key fact about this breed:\n"
         f"- {snippet}\n\n"
         "Provide exactly 5 adjectives (in English) that best describe this breed’s temperament, "
-        "separated by commas. Do not write anything else.\n"
+        "separated by commas. Do not echo the fact, do not repeat adjectives, and do not write anything else.\n"
     )
 
     # Generuj
@@ -107,9 +113,9 @@ def retrieve_and_generate(breed: str):
     if text.startswith(prompt):
         text = text[len(prompt):].lstrip()
 
-    # Wyciągnij linię z przymiotnikami
-    adjectives = text.splitlines()[0].strip()
-    parts = [a.strip().rstrip('.') for a in adjectives.split(',') if a.strip()]
+    # Wyciągnij pierwszą linię z listą przymiotników
+    adjectives_line = text.splitlines()[0]
+    parts = [a.strip().rstrip('.') for a in adjectives_line.split(',') if a.strip()]
     top5 = parts[:5]
 
     result = {"Rasa": breed, "Opis": ", ".join(top5)}
@@ -128,9 +134,8 @@ if uploaded:
         breed = classify_image(img)
     st.write(f"**Breed:** {breed}")
 
-    with st.spinner("Generating description..."):
+    with st.spinner("Generating temperament adjectives..."):
         result = retrieve_and_generate(breed)
 
     st.markdown("### Description")
     st.write(result["Opis"])
-

@@ -3,42 +3,23 @@ from PIL import Image
 import pandas as pd
 import torch
 import clip  # openai/CLIP
-import chromadb
-from chromadb.config import Settings
 import openai
 import json
 import jsonschema
 
 # --- 1. Load metadata ---
-@st.cache_resource
+@st.cache_data
 def load_metadata():
     df = pd.read_csv("stanford_dogs_metadata.csv")  # filepath, breed
     prof = pd.read_csv("breeds_profiles.csv")       # breed, text, source
-    return df, prof
+    # group profiles for quick retrieval
+    profile_map = prof.groupby("breed").apply(lambda g: g["text"].tolist())
+    source_map = prof.groupby("breed").apply(lambda g: g["source"].tolist())
+    return df, profile_map.to_dict(), source_map.to_dict()
 
-df, prof = load_metadata()
+df, profile_map, source_map = load_metadata()
 
-# --- 2. Initialize ChromaDB in memory (avoid sqlite) ---
-@st.cache_resource
-def init_chroma(prof_df):
-    client = chromadb.Client(Settings(
-        chroma_db_impl="duckdb",  # in-memory mode
-        persist_directory=None
-    ))
-    col = client.get_or_create_collection(name="breed_profiles")
-    # populate on first run
-    if col.count() == 0:
-        for i, row in prof_df.iterrows():
-            col.add(
-                ids=[f"profile_{i}"],
-                documents=[row.text],
-                metadatas=[{"breed": row.breed, "source": row.source}]
-            )
-    return col
-
-chroma = init_chroma(prof)
-
-# --- 3. Load CLIP (OpenAI) ---
+# --- 2. Load CLIP (OpenAI) ---
 @st.cache_resource
 def load_clip_model(device):
     model, preprocess = clip.load("ViT-B/32", device=device, jit=False)
@@ -58,7 +39,7 @@ def embed_breeds(breeds):
 
 breed_embeddings = embed_breeds(BREEDS)
 
-# --- 4. JSON schema for response validation ---
+# --- 3. JSON schema for response validation ---
 RESPONSE_SCHEMA = {
     "type": "object",
     "properties": {
@@ -73,7 +54,7 @@ RESPONSE_SCHEMA = {
 # Set OpenAI API key
 openai.api_key = st.secrets.get("openai_api_key")
 
-# --- 5. Classification function ---
+# --- 4. Classification function ---
 def classify_image(img: Image.Image):
     img_input = clip_preprocess(img).unsqueeze(0).to(device)
     with torch.no_grad():
@@ -83,15 +64,12 @@ def classify_image(img: Image.Image):
     score, idx = sims.max().item(), sims.argmax().item()
     return BREEDS[idx], score * 100
 
-# --- 6. Retrieval + generation using OpenAI ---
+# --- 5. Retrieval + generation using OpenAI ---
 def retrieve_and_generate(breed, conf):
     if conf < 50:
         return None, False, []
-    res = chroma.query(
-        query_texts=[breed], n_results=3, where={"breed": breed}
-    )
-    docs = res["documents"][0]
-    sources = [md["source"] for md in res["metadatas"][0]]
+    docs = profile_map.get(breed, [])[:3]
+    sources = source_map.get(breed, [])[:3]
     prompt = (
         f"Zidentyfikowano rasę: {breed} ({conf:.1f}%).\n"
         "Na podstawie poniższych fragmentów opisz temperament i potrzeby tej rasy "
@@ -109,7 +87,7 @@ def retrieve_and_generate(breed, conf):
     except Exception:
         return text, False, sources
 
-# --- 7. Streamlit UI ---
+# --- 6. Streamlit UI ---
 st.set_page_config(page_title="🐶 BreedSpotter", layout="centered")
 st.title("🐶 BreedSpotter — Rozpoznawanie ras psów")
 
@@ -134,4 +112,3 @@ if uploaded:
             st.markdown("#### Źródła")
             for s in srcs:
                 st.write(f"- {s}")
-

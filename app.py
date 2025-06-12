@@ -18,14 +18,15 @@ def load_metadata():
 
 df, prof = load_metadata()
 
-# --- 2. Initialize ChromaDB ---
+# --- 2. Initialize ChromaDB in memory (avoid sqlite) ---
 @st.cache_resource
 def init_chroma(prof_df):
     client = chromadb.Client(Settings(
-        chroma_db_impl="duckdb+parquet",
-        persist_directory="./chroma_data"
+        chroma_db_impl="duckdb",  # in-memory mode
+        persist_directory=None
     ))
     col = client.get_or_create_collection(name="breed_profiles")
+    # populate on first run
     if col.count() == 0:
         for i, row in prof_df.iterrows():
             col.add(
@@ -98,9 +99,7 @@ def retrieve_and_generate(breed, conf):
         "\n".join(docs)
     )
     resp = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.2
+        model="gpt-4", messages=[{"role": "user", "content": prompt}], temperature=0.2
     )
     text = resp.choices[0].message.content
     try:
@@ -135,3 +134,4 @@ if uploaded:
             st.markdown("#### Źródła")
             for s in srcs:
                 st.write(f"- {s}")
+

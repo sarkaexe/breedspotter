@@ -45,9 +45,12 @@ breed_embeddings = embed_breeds(BREEDS)
 RESPONSE_SCHEMA = {
     "type": "object",
     "properties": {
-        "Rasa":    {"type": "string"}}
+        "Rasa":    {"type": "string"},
+        "Pewność": {"type": "string", "pattern": "^\\d{1,3}%$"},
+        "Opis":    {"type": "string"},
+        "Źródła":  {"type": "array", "items": {"type": "string"}}
     },
-    "required": ["Rasa"]
+    "required": ["Rasa", "Pewność", "Opis", "Źródła"]
 }
 
 # Set OpenAI API key
@@ -71,7 +74,9 @@ def retrieve_and_generate(breed, conf):
     sources = source_map.get(breed, [])[:3]
     prompt = (
         f"Zidentyfikowano rasę: {breed} ({conf:.1f}%).\n"
-        "\n".join(str(d) for d in docs)
+        "Na podstawie poniższych fragmentów opisz temperament i potrzeby tej rasy "
+        "w formie JSON z polami Rasa, Pewność, Opis, Źródła:\n" +
+        "\n".join(docs)
     )
     resp = openai.ChatCompletion.create(
         model="gpt-4", messages=[{"role": "user", "content": prompt}], temperature=0.2
@@ -83,15 +88,3 @@ def retrieve_and_generate(breed, conf):
         return data, True, sources
     except Exception:
         return text, False, sources
-
-# --- 6. Streamlit UI ---
-st.title("🐶 BreedSpotter — Dog breed recognition")
-
-uploaded = st.file_uploader("Wgraj zdjęcie psa", type=["jpg","jpeg","png"])
-if uploaded:
-    img = Image.open(uploaded).convert("RGB")
-    st.image(img, caption="Your photo", use_container_width=True)
-    with st.spinner("Dog breed recognition..."):
-        breed, conf = classify_image(img)
-    st.write(f"**Rasa:** {breed}")
-

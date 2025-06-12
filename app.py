@@ -2,10 +2,10 @@ import streamlit as st
 from PIL import Image
 import pandas as pd
 import torch
-import clip  # openai/CLIP
+import clip
 import json
 import jsonschema
-from transformers import pipeline, Pipeline
+from transformers import pipeline
 from transformers.pipelines import TextGenerationPipeline
 
 # 1) Konfiguracja strony
@@ -53,25 +53,17 @@ RESPONSE_SCHEMA = {
     "required": ["Rasa", "Opis", "Źródła"]
 }
 
-# 6) Inicjalizacja generatora HF z fallbackiem
+# 6) Inicjalizacja generatora HF (distilgpt2)
 @st.cache_resource
 def get_generator() -> TextGenerationPipeline:
-    try:
-        return pipeline(
-            "text-generation",
-            model="meta-llama/Llama-2-7b-chat-hf",
-            max_new_tokens=100,
-            do_sample=False
-        )
-    except Exception:
-        return pipeline(
-            "text-generation",
-            model="distilgpt2",
-            max_new_tokens=100,
-            do_sample=False
-        )
+    return pipeline(
+        "text-generation",
+        model="distilgpt2",
+        max_new_tokens=100,
+        do_sample=False
+    )
 
-generator: Pipeline = get_generator()
+generator: TextGenerationPipeline = get_generator()
 
 # 7) Funkcja klasyfikująca rasę
 def classify_image(img: Image.Image):
@@ -92,29 +84,28 @@ def retrieve_and_generate(breed: str):
         docs = [f"No profile snippets available for {breed}."]
     docs = docs[:3]
 
+    # Pobierz źródła
     raw_srcs = source_map.get(breed, [])
     sources = [s for s in raw_srcs if isinstance(s, str) and s.strip()][:3]
 
+    # Buduj prompt
     snippets = "\n".join(f"- {d}" for d in docs)
-    prompt = f"""Breed: {breed}
-Provide a detailed, 3-sentence description of the temperament and needs of this breed based on the following snippets:
-{snippets}
-"""
+    prompt = (
+        f"Breed: {breed}\n"
+        "Provide a detailed, 3-sentence description of the temperament and needs of this breed based on the following snippets:\n"
+        f"{snippets}\n"
+    )
 
     out = generator(prompt)
     text = out[0].get("generated_text") or out[0].get("text", "")
 
-    # Weź pierwsze trzy zdania
+    # Weź pierwsze 3 zdania
     sentences = [s.strip() for s in text.split('.') if s.strip()]
     first_three = '. '.join(sentences[:3])
     if first_three and not first_three.endswith('.'):
         first_three += '.'
 
-    result = {
-        "Rasa":   breed,
-        "Opis":   first_three,
-        "Źródła": sources
-    }
+    result = {"Rasa": breed, "Opis": first_three, "Źródła": sources}
     jsonschema.validate(instance=result, schema=RESPONSE_SCHEMA)
     return result, sources
 
@@ -139,4 +130,3 @@ if uploaded:
     st.markdown("#### Sources")
     for s in srcs:
         st.write(f"- {s}")
-

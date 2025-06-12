@@ -8,7 +8,6 @@ from PIL import Image
 import pandas as pd
 import torch
 import clip
-import json
 import jsonschema
 from transformers import pipeline
 from transformers.pipelines import TextGenerationPipeline
@@ -19,8 +18,8 @@ st.set_page_config(page_title="🐶 BreedSpotter", layout="centered")
 # 2) Wczytywanie metadanych
 @st.cache_data
 def load_metadata():
-    df = pd.read_csv("stanford_dogs_metadata.csv")
-    prof = pd.read_csv("breeds_profiles.csv")
+    df = pd.read_csv("stanford_dogs_metadata.csv")  # filepath, breed
+    prof = pd.read_csv("breeds_profiles.csv")       # breed, text, source
     profile_map = prof.groupby("breed")["text"].apply(list).to_dict()
     return df, profile_map
 
@@ -78,9 +77,9 @@ def classify_image(img: Image.Image):
     idx = sims.argmax().item()
     return BREEDS[idx]
 
-# 8) Retrieval + generowanie opisu
+# 8) Retrieval + generowanie opisu (1 zdanie, max 20 słów)
 def retrieve_and_generate(breed: str):
-    # Pobierz top-3 snippetów
+    # Pobierz top-3 snippets
     docs_list = profile_map.get(breed, [])
     docs = [d for d in docs_list if isinstance(d, str) and d.strip()][:3]
 
@@ -89,32 +88,35 @@ def retrieve_and_generate(breed: str):
         snippets = "\n".join(f"- {d}" for d in docs)
         prompt = (
             f"Breed: {breed}\n"
-            "Provide a detailed, 3-sentence description of the temperament "
-            "and needs of this dog breed based on the following snippets:\n"
+            "Provide a concise, 1-sentence description (max 20 words) "
+            "of the temperament and needs of this dog breed based on:\n"
             f"{snippets}\n"
         )
     else:
         prompt = (
             f"Breed: {breed}\n"
-            "Provide a detailed, 3-sentence description of the temperament "
-            "and needs of this dog breed based on your general canine knowledge.\n"
+            "Provide a concise, 1-sentence description (max 20 words) "
+            "of the temperament and needs of this dog breed based on your general knowledge.\n"
         )
 
     # Generuj
-    out = generator(prompt, max_new_tokens=80)
+    out = generator(prompt, max_new_tokens=50)
     text = out[0].get("generated_text") or out[0].get("text", "")
 
     # Usuń echo prompta, jeśli wystąpiło
     if text.startswith(prompt):
         text = text[len(prompt):].lstrip()
 
-    # Weź pierwsze 3 zdania
-    sentences = [s.strip() for s in text.split('.') if s.strip()]
-    first_three = '. '.join(sentences[:3])
-    if first_three and not first_three.endswith('.'):
-        first_three += '.'
+    # Wyciągnij pierwsze zdanie
+    sentence = text.split(".", 1)[0].strip()
 
-    result = {"Rasa": breed, "Opis": first_three}
+    # Ogranicz do 20 słów
+    words = sentence.split()
+    short = " ".join(words[:20])
+    if short and not short.endswith("."):
+        short += "."
+
+    result = {"Rasa": breed, "Opis": short}
     jsonschema.validate(instance=result, schema=RESPONSE_SCHEMA)
     return result
 

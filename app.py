@@ -89,9 +89,14 @@ def classify_image(img: Image.Image) -> str:
 def retrieve_and_generate(breed: str):
     docs = profile_map.get(breed, [])[:2]
     sources = source_map.get(breed, [])[:2]
+    # Filter out non-string or NaN sources
+    sources = [str(s) for s in sources if isinstance(s, str) and s.strip()]
     prompt = (
-        f"Breed: {breed}.\nDescribe the temperament and needs of this breed based on:\n"
-        + "\n".join(f"- {d}" for d in docs)
+        f"Breed: {breed}.
+Describe the temperament and needs of this breed based on:
+"
+        + "
+".join(f"- {d}" for d in docs)
     )
     out = generator(prompt, max_length=len(prompt.split()) + 60, do_sample=False)
     text = out[0]["generated_text"]
@@ -100,7 +105,7 @@ def retrieve_and_generate(breed: str):
     jsonschema.validate(instance=result, schema=RESPONSE_SCHEMA)
     return result, sources
 
-# --- 7. Streamlit UI ---
+# --- 7. Streamlit UI --- Streamlit UI ---
 st.title("🐶 BreedSpotter — Dog breed recognition")
 
 uploaded = st.file_uploader("Upload a photo", type=["jpg","jpeg","png"])

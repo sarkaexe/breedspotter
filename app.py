@@ -67,24 +67,24 @@ def is_dog(img: Image.Image) -> bool:
     return sims[0] > sims[1]
 
 # --- 5. Classification function ---
-def classify_image(img: Image.Image):
+def classify_image(img: Image.Image) -> str:
     img_input = clip_preprocess(img).unsqueeze(0).to(device)
     with torch.no_grad():
         img_emb = clip_model.encode_image(img_input)
         img_emb = img_emb / img_emb.norm(dim=-1, keepdim=True)
         sims = (img_emb @ breed_embeddings.T).squeeze(0)
-    score, idx = sims.max().item(), sims.argmax().item()
-    return BREEDS[idx], score * 100
+    idx = sims.argmax().item()
+    return BREEDS[idx]
 
 # --- 6. Retrieval + generation using caching and cheaper model ---
 @st.cache_data(show_spinner=False)
 def retrieve_and_generate(breed: str):
-    docs = profile_map.get(breed, [])[:2]  # use top-2 fragments
+    docs = profile_map.get(breed, [])[:2]
     sources = source_map.get(breed, [])[:2]
     prompt = (
-        f"Identify breed: {breed}.\n"
-        "Describe its temperament and needs based on the following snippets (top 2).\n"
-        + "\n".join(docs)
+        f"Zidentyfikowano rasę: {breed}.\n"
+        "Opisz temperament i potrzeby tej rasy bazując na poniższych fragmentach:\n"
+        + "\n".join(f"- {d}" for d in docs)
     )
     resp = openai.chat.completions.create(
         model="gpt-3.5-turbo",
@@ -106,20 +106,17 @@ uploaded = st.file_uploader("Upload a photo", type=["jpg","jpeg","png"])
 if uploaded:
     img = Image.open(uploaded).convert("RGB")
     st.image(img, caption="Your photo", use_container_width=True)
-
     if not is_dog(img):
         st.error("This does not look like a dog. Please upload a dog photo.")
     else:
         with st.spinner("Classifying breed..."):
-            breed, conf = classify_image(img)
-        st.write(f"**Breed:** {breed} ({conf:.1f}% confidence)")
-        if conf < 50:
-            st.warning("Low confidence. Try another photo.")
-        else:
-            with st.spinner("Generating description..."):
-                result, srcs = retrieve_and_generate(breed)
-            st.markdown("### Description")
-            st.write(result.get("Opis"))
-            st.markdown("#### Sources")
-            for s in srcs:
-                st.write(f"- {s}")
+            breed = classify_image(img)
+        st.write(f"**Breed:** {breed}")
+        with st.spinner("Generating description..."):
+            result, srcs = retrieve_and_generate(breed)
+        st.markdown("### Description")
+        st.write(result.get("Opis"))
+        st.markdown("#### Sources")
+        for s in srcs:
+            st.write(f"- {s}")
+

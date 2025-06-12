@@ -76,7 +76,7 @@ def retrieve_and_generate(breed, conf):
         f"Zidentyfikowano rasę: {breed} ({conf:.1f}%).\n"
         "Na podstawie poniższych fragmentów opisz temperament i potrzeby tej rasy "
         "w formie JSON z polami Rasa, Pewność, Opis, Źródła:\n" +
-        "\n".join(docs)
+        "\n".join(str(d) for d in docs)
     )
     resp = openai.ChatCompletion.create(
         model="gpt-4", messages=[{"role": "user", "content": prompt}], temperature=0.2
@@ -95,7 +95,9 @@ st.title("🐶 BreedSpotter — Rozpoznawanie ras psów")
 uploaded = st.file_uploader("Wgraj zdjęcie psa", type=["jpg","jpeg","png"])
 if uploaded:
     img = Image.open(uploaded).convert("RGB")
-    st.image(img, caption="Twoje zdjęcie", use_column_width=True)
+    st.image(img, caption="Twoje zdjęcie", use_container_width=True)
     with st.spinner("Rozpoznawanie rasy..."):
         breed, conf = classify_image(img)
     st.write(f"**Rasa:** {breed}")
+    st.write(f"**Pewność:** {conf:.1f}%")
+

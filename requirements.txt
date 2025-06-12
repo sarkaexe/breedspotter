@@ -1,12 +1,12 @@
 streamlit
 torch==2.7.1
 torchvision==0.22.1
-transformers==4.32.0
-tokenizers==0.13.3
+# OpenAI CLIP (bez tokenizers)
+git+https://github.com/openai/CLIP.git
 chromadb==0.4.3
 pillow
 pandas
 jsonschema
+openai
 ftfy
 regex
-openai

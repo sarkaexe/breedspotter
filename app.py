@@ -72,9 +72,8 @@ def retrieve_and_generate(breed):
     prompt = (
         f"Zidentyfikowano rasę: {breed}.\n"
         "Na podstawie poniższych fragmentów opisz temperament i potrzeby tej rasy "
-        "w formie JSON z polami Rasa, Opis, Źródła:\n" +
-        "\n"."
-".join(str(d) for d in docs)
+        "w formie JSON z polami Rasa, Opis, Źródła:\n"
+        + "\n".join(str(d) for d in docs)
     )
     resp = openai.ChatCompletion.create(
         model="gpt-4", messages=[{"role": "user", "content": prompt}], temperature=0.2
@@ -103,9 +102,7 @@ if uploaded:
         st.error("Nie udało się zwalidować odpowiedzi.")
     else:
         st.markdown("### Opis temperamentu i potrzeb")
-        st.write(result["Opis"] if isinstance(result, dict) else result)
+        st.write(result.get("Opis") if isinstance(result, dict) else result)
         st.markdown("#### Źródła")
         for s in srcs:
             st.write(f"- {s}")
-
-

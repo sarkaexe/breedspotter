@@ -81,22 +81,23 @@ def classify_image(img: Image.Image):
 # 8) Retrieval + generowanie opisu
 def retrieve_and_generate(breed: str):
     # Pobierz top-3 snippetów
-    raw_docs = prof := profile_map.get(breed, [])
-    docs = [d for d in prof if isinstance(d, str) and d.strip()][:3]
-    if not docs:
-        # fallback: czysta generacja
-        prompt = (
-            f"Breed: {breed}\n"
-            "Provide a detailed, 3-sentence description of the temperament "
-            "and needs of this dog breed based on your general canine knowledge.\n"
-        )
-    else:
+    docs_list = profile_map.get(breed, [])
+    docs = [d for d in docs_list if isinstance(d, str) and d.strip()][:3]
+
+    # Zbuduj prompt
+    if docs:
         snippets = "\n".join(f"- {d}" for d in docs)
         prompt = (
             f"Breed: {breed}\n"
             "Provide a detailed, 3-sentence description of the temperament "
             "and needs of this dog breed based on the following snippets:\n"
             f"{snippets}\n"
+        )
+    else:
+        prompt = (
+            f"Breed: {breed}\n"
+            "Provide a detailed, 3-sentence description of the temperament "
+            "and needs of this dog breed based on your general canine knowledge.\n"
         )
 
     # Generuj

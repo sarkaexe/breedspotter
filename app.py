@@ -24,6 +24,7 @@ def load_metadata():
     return df, profile_map
 
 df, profile_map = load_metadata()
+BREEDS = sorted(df.breed.unique())
 
 # 3) Ładowanie CLIP
 @st.cache_resource
@@ -33,7 +34,6 @@ def load_clip(device):
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 clip_model, clip_preprocess = load_clip(device)
-BREEDS = sorted(df.breed.unique())
 
 # 4) Precompute text embeddings
 @st.cache_resource
@@ -77,27 +77,26 @@ def classify_image(img: Image.Image):
     idx = sims.argmax().item()
     return BREEDS[idx]
 
-# 8) Retrieval + generowanie opisu (3 zdania, bez powtórzeń)
+# 8) Retrieval + generowanie opisu (3 zdania) z 1 snippetem
 def retrieve_and_generate(breed: str):
-    # Pobierz top-3 snippetów
+    # Pobierz top-1 snippet
     raw_docs = profile_map.get(breed, [])
-    docs = [d for d in raw_docs if isinstance(d, str) and d.strip()][:3]
+    docs = [d for d in raw_docs if isinstance(d, str) and d.strip()][:1]
 
-    # Buduj prompt
-    if docs:
-        snippets = "\n".join(f"- {d}" for d in docs)
-        prompt = (
-            f"Breed: {breed}\n"
-            "Based on the following facts, write a clear 3-sentence paragraph "
-            "describing the temperament and needs of this dog breed:\n"
-            f"{snippets}\n"
-        )
-    else:
-        prompt = (
-            f"Breed: {breed}\n"
-            "Write a clear 3-sentence paragraph describing the temperament "
-            "and needs of this dog breed based on your general canine knowledge.\n"
-        )
+    if not docs:
+        return {
+            "Rasa": breed,
+            "Opis": "Sorry, no profile information available for this breed at the moment."
+        }
+
+    # Buduj prompt na podstawie jednego snippet’a
+    snippet = docs[0]
+    prompt = (
+        f"Breed: {breed}\n"
+        "Based on the following fact, write a clear 3-sentence paragraph "
+        "describing the temperament and needs of this dog breed:\n"
+        f"- {snippet}\n"
+    )
 
     # Generuj tekst
     out = generator(prompt, max_new_tokens=100)
@@ -109,6 +108,7 @@ def retrieve_and_generate(breed: str):
 
     # Podziel na zdania i oczyść
     raw_sents = [s.strip() for s in text.split('.') if s.strip()]
+
     # Usuń konsekutywne duplikaty
     sentences = []
     prev = None
@@ -116,14 +116,13 @@ def retrieve_and_generate(breed: str):
         if s != prev:
             sentences.append(s)
         prev = s
+
     # Weź pierwsze 3 unikalne zdania
     paragraph = ". ".join(sentences[:3])
     if paragraph and not paragraph.endswith('.'):
         paragraph += '.'
 
-    result = {"Rasa": breed, "Opis": paragraph}
-    jsonschema.validate(instance=result, schema=RESPONSE_SCHEMA)
-    return result
+    return {"Rasa": breed, "Opis": paragraph}
 
 # 9) UI Streamlit
 st.title("🐶 BreedSpotter — Dog breed recognition")
@@ -142,4 +141,3 @@ if uploaded:
 
     st.markdown("### Description")
     st.write(result["Opis"])
-

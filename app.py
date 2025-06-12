@@ -90,7 +90,7 @@ def retrieve_and_generate(breed, conf):
 # --- 6. Streamlit UI ---
 st.title("🐶 BreedSpotter — Dog breed recognition")
 
-uploaded = st.file_uploader("Wgraj zdjęcie psa", type=["jpg","jpeg","png"])
+uploaded = st.file_uploader("Upload dog's photo", type=["jpg","jpeg","png"])
 if uploaded:
     img = Image.open(uploaded).convert("RGB")
     st.image(img, caption="Your photo", use_container_width=True)

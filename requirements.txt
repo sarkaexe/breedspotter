@@ -10,3 +10,4 @@ ftfy
 regex
 transformers
 tokenizers
+accelerate

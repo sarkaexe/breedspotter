@@ -53,13 +53,14 @@ RESPONSE_SCHEMA = {
     "required": ["Rasa", "Opis", "Źródła"]
 }
 
-# 6) Inicjalizacja generatora HF z GPT-Neo 125M
+# 6) Inicjalizacja generatora HF z GPT-Neo 125M i truncation
 @st.cache_resource
 def get_generator() -> TextGenerationPipeline:
     return pipeline(
         "text-generation",
         model="EleutherAI/gpt-neo-125M",
-        do_sample=False
+        do_sample=False,
+        truncation=True
     )
 
 generator: TextGenerationPipeline = get_generator()
@@ -94,11 +95,8 @@ def retrieve_and_generate(breed: str):
         f"{snippets}\n"
     )
 
-    # Generuj
-    out = generator(
-        prompt,
-        max_length=len(prompt.split()) + 80
-    )
+    # Generuj tylko z max_new_tokens
+    out = generator(prompt, max_new_tokens=80)
     text = out[0].get("generated_text") or out[0].get("text", "")
 
     # Weź pierwsze 3 zdania

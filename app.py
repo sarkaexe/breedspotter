@@ -80,7 +80,7 @@ def classify_image(img: Image.Image):
     idx = sims.argmax().item()
     return BREEDS[idx]
 
-# 8) Retrieval + generowanie opisu (3 zdania) z 1 snippetem
+# 8) Retrieval + generowanie opisu (3 zdania) z 1 snippetem, fokus na temperament
 def retrieve_and_generate(breed: str):
     # Pobierz top-1 snippet
     raw_docs = profile_map.get(breed, [])
@@ -90,14 +90,14 @@ def retrieve_and_generate(breed: str):
             snippet = d
             break
 
-    # Buduj prompt z jasnymi instrukcjami
+    # Buduj prompt: tylko temperament, bez badań czy potrzeb
     prompt = (
         f"Breed: {breed}\n"
         "Here is one key fact about this breed:\n"
         f"- {snippet}\n\n"
-        "Now write a 3-sentence paragraph describing the temperament and needs of this dog breed. "
-        "Use a friendly, positive tone; write three distinct sentences with no repeated phrases. "
-        "Do not echo the fact verbatim.\n"
+        "Write a 3-sentence description of this breed’s TEMPERAMENT only. "
+        "Focus solely on personality traits and behavior, in a positive tone. "
+        "Do not mention needs, history, studies, or repeat phrases.\n"
     )
 
     # Generuj tekst
@@ -111,7 +111,7 @@ def retrieve_and_generate(breed: str):
     # Podziel na zdania i oczyść
     raw_sents = [s.strip() for s in text.split('.') if s.strip()]
 
-    # Usuń konsekwentne duplikaty
+    # Usuń konsekutywne duplikaty
     sentences, prev = [], None
     for s in raw_sents:
         if s != prev:
@@ -144,3 +144,4 @@ if uploaded:
 
     st.markdown("### Description")
     st.write(result["Opis"])
+

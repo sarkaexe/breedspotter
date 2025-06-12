@@ -43,14 +43,17 @@ breed_embeddings = embed_texts(BREEDS)
 detector_texts = ["a photo of a dog", "not a dog"]
 detector_embeddings = embed_texts(detector_texts)
 
-# --- 3. Initialize Hugging Face generator ---
+# --- 3. Initialize Hugging Face Llama generator ---
 @st.cache_resource
 def get_generator():
+    # Load Llama-2 7B chat model for text generation
     return pipeline(
         "text-generation",
-        model="distilgpt2",
+        model="meta-llama/Llama-2-7b-chat-hf",
         device=0 if torch.cuda.is_available() else -1,
-        return_full_text=False
+        return_full_text=False,
+        temperature=0.7,
+        max_new_tokens=100
     )
 generator = get_generator()
 

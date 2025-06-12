@@ -55,13 +55,16 @@ RESPONSE_SCHEMA = {
     "required": ["Rasa", "Opis"]
 }
 
-# 6) Inicjalizacja generatora HF z GPT-Neo 125M
+# 6) Inicjalizacja generatora HF z GPT-Neo 125M (sampling enabled)
 @st.cache_resource
 def get_generator() -> TextGenerationPipeline:
     return pipeline(
         "text-generation",
         model="EleutherAI/gpt-neo-125M",
-        do_sample=False,
+        do_sample=True,
+        temperature=0.7,
+        top_k=50,
+        top_p=0.9,
         truncation=True
     )
 
@@ -87,7 +90,7 @@ def retrieve_and_generate(breed: str):
             snippet = d
             break
 
-    # Buduj prompt korzystając z tego jedynego snippet’a
+    # Buduj prompt na podstawie jednego snippet’a
     prompt = (
         f"Breed: {breed}\n"
         "Based on the following fact, write a clear 3-sentence paragraph "

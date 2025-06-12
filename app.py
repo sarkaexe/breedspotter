@@ -88,7 +88,7 @@ def retrieve_and_generate(breed, conf):
         "Fragmenty z bazy wiedzy:\n" + "\n".join(f"- {d}" for d in docs)
     )
     resp = openai.chat.completions.create(
-        model="gpt-4",
+        model="gpt-3.5-turbo",  # fallback if GPT-4 not available
         messages=[{"role": "user", "content": prompt}],
         temperature=0.2
     )
@@ -131,3 +131,4 @@ if uploaded:
             st.markdown("#### Źródła")
             for s in srcs:
                 st.write(f"- {s}")
+

@@ -81,16 +81,13 @@ def classify_image(img: Image.Image):
 def retrieve_and_generate(breed: str):
     # Pobierz top-1 snippet
     raw_docs = profile_map.get(breed, [])
-    docs = [d for d in raw_docs if isinstance(d, str) and d.strip()][:1]
+    snippet = ""
+    for d in raw_docs:
+        if isinstance(d, str) and d.strip():
+            snippet = d
+            break
 
-    if not docs:
-        return {
-            "Rasa": breed,
-            "Opis": "Sorry, no profile information available for this breed at the moment."
-        }
-
-    # Buduj prompt na podstawie jednego snippet’a
-    snippet = docs[0]
+    # Buduj prompt korzystając z tego jedynego snippet’a
     prompt = (
         f"Breed: {breed}\n"
         "Based on the following fact, write a clear 3-sentence paragraph "
@@ -110,8 +107,7 @@ def retrieve_and_generate(breed: str):
     raw_sents = [s.strip() for s in text.split('.') if s.strip()]
 
     # Usuń konsekutywne duplikaty
-    sentences = []
-    prev = None
+    sentences, prev = [], None
     for s in raw_sents:
         if s != prev:
             sentences.append(s)
@@ -122,7 +118,9 @@ def retrieve_and_generate(breed: str):
     if paragraph and not paragraph.endswith('.'):
         paragraph += '.'
 
-    return {"Rasa": breed, "Opis": paragraph}
+    result = {"Rasa": breed, "Opis": paragraph}
+    jsonschema.validate(instance=result, schema=RESPONSE_SCHEMA)
+    return result
 
 # 9) UI Streamlit
 st.title("🐶 BreedSpotter — Dog breed recognition")

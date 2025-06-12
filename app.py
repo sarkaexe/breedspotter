@@ -1,4 +1,3 @@
-```python
 import streamlit as st
 from PIL import Image
 import pandas as pd
@@ -137,4 +136,4 @@ if uploaded:
             st.markdown("#### Źródła")
             for s in srcs:
                 st.write(f"- {s}")
-```
+

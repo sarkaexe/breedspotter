@@ -45,12 +45,9 @@ breed_embeddings = embed_breeds(BREEDS)
 RESPONSE_SCHEMA = {
     "type": "object",
     "properties": {
-        "Rasa":    {"type": "string"},
-        "Pewność": {"type": "string", "pattern": "^\\d{1,3}%$"},
-        "Opis":    {"type": "string"},
-        "Źródła":  {"type": "array", "items": {"type": "string"}}
+        "Rasa":    {"type": "string"}}
     },
-    "required": ["Rasa", "Pewność", "Opis", "Źródła"]
+    "required": ["Rasa"]
 }
 
 # Set OpenAI API key

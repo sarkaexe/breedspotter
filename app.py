@@ -2,7 +2,6 @@ import streamlit as st
 from PIL import Image
 import pandas as pd
 import torch
-import torch.nn.functional as F
 import clip  # openai/CLIP
 import chromadb
 from chromadb.config import Settings
@@ -83,7 +82,7 @@ def classify_image(img: Image.Image):
     score, idx = sims.max().item(), sims.argmax().item()
     return BREEDS[idx], score * 100
 
-# --- 6. Retrieval + generation using OpenAI---
+# --- 6. Retrieval + generation using OpenAI ---
 def retrieve_and_generate(breed, conf):
     if conf < 50:
         return None, False, []
@@ -136,4 +135,3 @@ if uploaded:
             st.markdown("#### Źródła")
             for s in srcs:
                 st.write(f"- {s}")
-

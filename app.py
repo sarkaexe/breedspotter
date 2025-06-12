@@ -90,13 +90,13 @@ def retrieve_and_generate(breed, conf):
         return text, False, sources
 
 # --- 6. Streamlit UI ---
-st.title("🐶 BreedSpotter — Rozpoznawanie ras psów")
+st.title("🐶 BreedSpotter — Dog breed recognition")
 
 uploaded = st.file_uploader("Wgraj zdjęcie psa", type=["jpg","jpeg","png"])
 if uploaded:
     img = Image.open(uploaded).convert("RGB")
-    st.image(img, caption="Twoje zdjęcie", use_container_width=True)
-    with st.spinner("Rozpoznawanie rasy..."):
+    st.image(img, caption="Your photo", use_container_width=True)
+    with st.spinner("Dog breed recognition..."):
         breed, conf = classify_image(img)
     st.write(f"**Rasa:** {breed}")
 

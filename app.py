@@ -55,7 +55,7 @@ RESPONSE_SCHEMA = {
     "required": ["Rasa", "Opis"]
 }
 
-# 6) Inicjalizacja generatora HF z GPT-Neo 125M
+# 6) Inicjalizacja generatora HF z GPT-Neo-125M
 @st.cache_resource
 def get_generator() -> TextGenerationPipeline:
     return pipeline(
@@ -77,46 +77,43 @@ def classify_image(img: Image.Image):
     idx = sims.argmax().item()
     return BREEDS[idx]
 
-# 8) Retrieval + generowanie opisu (1 zdanie, max 20 słów)
+# 8) Retrieval + generowanie opisu (3 zdania)
 def retrieve_and_generate(breed: str):
-    # Pobierz top-3 snippets
-    docs_list = profile_map.get(breed, [])
-    docs = [d for d in docs_list if isinstance(d, str) and d.strip()][:3]
+    # Pobierz top-3 snippetów
+    raw_docs = profile_map.get(breed, [])
+    docs = [d for d in raw_docs if isinstance(d, str) and d.strip()][:3]
 
-    # Zbuduj prompt
+    # Buduj prompt
     if docs:
         snippets = "\n".join(f"- {d}" for d in docs)
         prompt = (
             f"Breed: {breed}\n"
-            "Provide a concise, 1-sentence description (max 20 words) "
-            "of the temperament and needs of this dog breed based on:\n"
+            "Based on the following facts, write a clear 3-sentence paragraph "
+            "describing the temperament and needs of this dog breed:\n"
             f"{snippets}\n"
         )
     else:
         prompt = (
             f"Breed: {breed}\n"
-            "Provide a concise, 1-sentence description (max 20 words) "
-            "of the temperament and needs of this dog breed based on your general knowledge.\n"
+            "Write a clear 3-sentence paragraph describing the temperament "
+            "and needs of this dog breed based on your general canine knowledge.\n"
         )
 
-    # Generuj
-    out = generator(prompt, max_new_tokens=50)
+    # Generuj tekst
+    out = generator(prompt, max_new_tokens=100)
     text = out[0].get("generated_text") or out[0].get("text", "")
 
     # Usuń echo prompta, jeśli wystąpiło
     if text.startswith(prompt):
         text = text[len(prompt):].lstrip()
 
-    # Wyciągnij pierwsze zdanie
-    sentence = text.split(".", 1)[0].strip()
+    # Weź pierwsze 3 zdania
+    sentences = [s.strip() for s in text.split('.') if s.strip()]
+    paragraph = ". ".join(sentences[:3])
+    if paragraph and not paragraph.endswith('.'):
+        paragraph += '.'
 
-    # Ogranicz do 20 słów
-    words = sentence.split()
-    short = " ".join(words[:20])
-    if short and not short.endswith("."):
-        short += "."
-
-    result = {"Rasa": breed, "Opis": short}
+    result = {"Rasa": breed, "Opis": paragraph}
     jsonschema.validate(instance=result, schema=RESPONSE_SCHEMA)
     return result
 

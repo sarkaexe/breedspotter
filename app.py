@@ -46,11 +46,10 @@ RESPONSE_SCHEMA = {
     "type": "object",
     "properties": {
         "Rasa":    {"type": "string"},
-        "Pewność": {"type": "string", "pattern": "^\\d{1,3}%$"},
         "Opis":    {"type": "string"},
         "Źródła":  {"type": "array", "items": {"type": "string"}}
     },
-    "required": ["Rasa", "Pewność", "Opis", "Źródła"]
+    "required": ["Rasa", "Opis", "Źródła"]
 }
 
 # Set OpenAI API key
@@ -63,22 +62,20 @@ def classify_image(img: Image.Image):
         img_emb = clip_model.encode_image(img_input)
         img_emb = img_emb / img_emb.norm(dim=-1, keepdim=True)
         sims = (img_emb @ breed_embeddings.T).squeeze(0)
-    score, idx = sims.max().item(), sims.argmax().item()
-    return BREEDS[idx], score * 100
+    idx = sims.argmax().item()
+    return BREEDS[idx]
 
 # --- 5. Retrieval + generation using OpenAI ---
-def retrieve_and_generate(breed, conf):
-    if conf < 50:
-        return None, False, []
+def retrieve_and_generate(breed):
     docs = profile_map.get(breed, [])[:3]
     sources = source_map.get(breed, [])[:3]
     prompt = (
-        f"Zidentyfikowano rasę: {breed} ({conf:.1f}%).\n"
+        f"Zidentyfikowano rasę: {breed}.\n"
         "Na podstawie poniższych fragmentów opisz temperament i potrzeby tej rasy "
-        "w formie JSON z polami Rasa, Pewność, Opis, Źródła:\n" +
+        "w formie JSON z polami Rasa, Opis, Źródła:\n" +
         "\n".join(str(d) for d in docs)
     )
-    resp = openai.ChatCompletion.create(
+    resp = openai.chat.completions.create(
         model="gpt-4", messages=[{"role": "user", "content": prompt}], temperature=0.2
     )
     text = resp.choices[0].message.content
@@ -97,19 +94,15 @@ if uploaded:
     img = Image.open(uploaded).convert("RGB")
     st.image(img, caption="Twoje zdjęcie", use_container_width=True)
     with st.spinner("Rozpoznawanie rasy... "):
-        breed, conf = classify_image(img)
+        breed = classify_image(img)
     st.write(f"**Rasa:** {breed}")
-    st.write(f"**Pewność:** {conf:.1f}%")
-    if conf < 50:
-        st.warning("Nie jestem pewien – podaj lepsze zdjęcie.")
+    with st.spinner("Generowanie opisu... "):
+        result, valid, srcs = retrieve_and_generate(breed)
+    if not valid:
+        st.error("Nie udało się zwalidować odpowiedzi.")
     else:
-        with st.spinner("Generowanie opisu... "):
-            result, valid, srcs = retrieve_and_generate(breed, conf)
-        if not valid:
-            st.error("Nie udało się zwalidować odpowiedzi.")
-        else:
-            st.markdown("### Opis temperamentu i potrzeb")
-            st.write(result["Opis"] if isinstance(result, dict) else result)
-            st.markdown("#### Źródła")
-            for s in srcs:
-                st.write(f"- {s}")
+        st.markdown("### Opis temperamentu i potrzeb")
+        st.write(result.get("Opis") if isinstance(result, dict) else result)
+        st.markdown("#### Źródła")
+        for s in srcs:
+            st.write(f"- {s}")

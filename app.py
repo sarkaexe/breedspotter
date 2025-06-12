@@ -7,19 +7,21 @@ import openai
 import json
 import jsonschema
 
+# Page config must be first Streamlit command
+st.set_page_config(page_title="🐶 BreedSpotter", layout="centered")
+
 # --- 1. Load metadata ---
 @st.cache_data
 def load_metadata():
     df = pd.read_csv("stanford_dogs_metadata.csv")  # filepath, breed
     prof = pd.read_csv("breeds_profiles.csv")       # breed, text, source
-    # group profiles for quick retrieval
-    profile_map = prof.groupby("breed").apply(lambda g: g["text"].tolist())
-    source_map = prof.groupby("breed").apply(lambda g: g["source"].tolist())
-    return df, profile_map.to_dict(), source_map.to_dict()
+    profile_map = prof.groupby("breed")["text"].apply(list).to_dict()
+    source_map = prof.groupby("breed")["source"].apply(list).to_dict()
+    return df, profile_map, source_map
 
 df, profile_map, source_map = load_metadata()
 
-# --- 2. Load CLIP (OpenAI) ---
+# --- 2. Load CLIP model ---
 @st.cache_resource
 def load_clip_model(device):
     model, preprocess = clip.load("ViT-B/32", device=device, jit=False)
@@ -88,7 +90,6 @@ def retrieve_and_generate(breed, conf):
         return text, False, sources
 
 # --- 6. Streamlit UI ---
-st.set_page_config(page_title="🐶 BreedSpotter", layout="centered")
 st.title("🐶 BreedSpotter — Rozpoznawanie ras psów")
 
 uploaded = st.file_uploader("Wgraj zdjęcie psa", type=["jpg","jpeg","png"])

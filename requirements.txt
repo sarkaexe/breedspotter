@@ -1,1 +1,11 @@
-
+streamlit
+torch
+torchvision
+transformers
+chromadb
+guardrails
+pillow
+pandas
+ftfy
+regex
+accelerate

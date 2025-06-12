@@ -82,19 +82,33 @@ def classify_image(img: Image.Image):
 
 # --- 6. Retrieval + generation with HF model ---
 def retrieve_and_generate(breed: str):
+    # Pobieramy 2 snippet’y
     docs = profile_map.get(breed, [])[:2]
     sources = source_map.get(breed, [])[:2]
-    # Filter out non-string or nan sources
     sources = [s for s in sources if isinstance(s, str) and s.strip()]
+
     snippets = "\n".join(f"- {d}" for d in docs)
     prompt = f"""Breed: {breed}
 Describe the temperament and needs of this breed based on the following snippets:
 {snippets}
-Provide the answer as JSON with fields Rasa, Opis, Źródła."""
+Provide a concise answer as plain text."""
+    
+    # Generujemy
     out = generator(prompt)
-    # For HF pipelines, generated_text may be key "generated_text" or "text"
     text = out[0].get("generated_text") or out[0].get("text", "")
-    result = {"Rasa": breed, "Opis": text.strip(), "Źródła": sources}
+    
+    # Wyciągamy TYLKO pierwsze zdanie:
+    first_sentence = text.strip().split(".", 1)[0].strip()
+    if not first_sentence.endswith("."):
+        first_sentence += "."
+
+    # Budujemy wynik JSON
+    result = {
+        "Rasa": breed,
+        "Opis": first_sentence,
+        "Źródła": sources
+    }
+    # Walidacja struktury
     jsonschema.validate(instance=result, schema=RESPONSE_SCHEMA)
     return result, sources
 

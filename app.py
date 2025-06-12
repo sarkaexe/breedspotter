@@ -91,12 +91,15 @@ def retrieve_and_generate(breed: str):
     sources = source_map.get(breed, [])[:2]
     # Filter out non-string or NaN sources
     sources = [str(s) for s in sources if isinstance(s, str) and s.strip()]
+    # Build prompt correctly as single string
+    snippets = "
+".join(f"- {d}" for d in docs)
     prompt = (
         f"Breed: {breed}.
-Describe the temperament and needs of this breed based on:
 "
-        + "
-".join(f"- {d}" for d in docs)
+        "Describe the temperament and needs of this breed based on the following snippets:
+"
+        f"{snippets}"
     )
     out = generator(prompt, max_length=len(prompt.split()) + 60, do_sample=False)
     text = out[0]["generated_text"]
@@ -125,4 +128,3 @@ if uploaded:
         st.markdown("#### Sources")
         for s in srcs:
             st.write(f"- {s}")
-

@@ -100,16 +100,3 @@ if uploaded:
         breed, conf = classify_image(img)
     st.write(f"**Rasa:** {breed}")
     st.write(f"**Pewność:** {conf:.1f}%")
-    if conf < 50:
-        st.warning("Nie jestem pewien – podaj lepsze zdjęcie.")
-    else:
-        with st.spinner("Generowanie opisu..."):
-            result, valid, srcs = retrieve_and_generate(breed, conf)
-        if not valid:
-            st.error("Nie udało się zwalidować odpowiedzi.")
-        else:
-            st.markdown("### Opis temperamentu i potrzeb")
-            st.write(result["Opis"] if isinstance(result, dict) else result)
-            st.markdown("#### Źródła")
-            for s in srcs:
-                st.write(f"- {s}")

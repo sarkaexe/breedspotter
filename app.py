@@ -29,17 +29,19 @@ def load_clip_model(device):
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 clip_model, clip_preprocess = load_clip_model(device)
+
+# Prepare embeddings for dog detection and breeds
 BREEDS = sorted(df.breed.unique())
-
-# Precompute text embeddings
 @st.cache_resource
-def embed_breeds(breeds):
+def embed_texts(texts):
+    tokens = clip.tokenize(texts).to(device)
     with torch.no_grad():
-        text_tokens = clip.tokenize(breeds).to(device)
-        text_emb = clip_model.encode_text(text_tokens)
-        return text_emb / text_emb.norm(dim=-1, keepdim=True)
+        emb = clip_model.encode_text(tokens)
+    return emb / emb.norm(dim=-1, keepdim=True)
 
-breed_embeddings = embed_breeds(BREEDS)
+breed_embeddings = embed_texts(BREEDS)
+detector_texts = ["a photo of a dog", "not a dog"]
+detector_embeddings = embed_texts(detector_texts)
 
 # --- 3. JSON schema for response validation ---
 RESPONSE_SCHEMA = {
@@ -56,7 +58,16 @@ RESPONSE_SCHEMA = {
 # Set OpenAI API key
 openai.api_key = st.secrets.get("openai_api_key")
 
-# --- 4. Classification function ---
+# --- 4. Detection function ---
+def is_dog(img: Image.Image):
+    img_input = clip_preprocess(img).unsqueeze(0).to(device)
+    with torch.no_grad():
+        emb = clip_model.encode_image(img_input)
+        emb = emb / emb.norm(dim=-1, keepdim=True)
+        sims = (emb @ detector_embeddings.T).squeeze(0)
+    return sims[0] > sims[1]
+
+# --- 5. Classification function ---
 def classify_image(img: Image.Image):
     img_input = clip_preprocess(img).unsqueeze(0).to(device)
     with torch.no_grad():
@@ -66,15 +77,13 @@ def classify_image(img: Image.Image):
     score, idx = sims.max().item(), sims.argmax().item()
     return BREEDS[idx], score * 100
 
-# --- 5. Retrieval + generation using OpenAI ---
+# --- 6. Retrieval + generation using OpenAI ---
 def retrieve_and_generate(breed, conf):
-    if conf < 50:
-        return None, False, []
     docs = profile_map.get(breed, [])[:3]
     sources = source_map.get(breed, [])[:3]
     prompt = (
         f"Zidentyfikowano rasę: {breed} ({conf:.1f}%).\n"
-        "\n".join(str(d) for d in docs)
+        + "\n".join(str(d) for d in docs)
     )
     resp = openai.ChatCompletion.create(
         model="gpt-4", messages=[{"role": "user", "content": prompt}], temperature=0.2
@@ -87,13 +96,16 @@ def retrieve_and_generate(breed, conf):
     except Exception:
         return text, False, sources
 
-# --- 6. Streamlit UI ---
+# --- 7. Streamlit UI ---
 st.title("🐶 BreedSpotter — Dog breed recognition")
 
 uploaded = st.file_uploader("Upload dog's photo", type=["jpg","jpeg","png"])
 if uploaded:
     img = Image.open(uploaded).convert("RGB")
     st.image(img, caption="Your photo", use_container_width=True)
-    with st.spinner("Dog breed recognition..."):
-        breed, conf = classify_image(img)
-    st.write(f"**Breed:** {breed}")
+    if not is_dog(img):
+        st.error("This does not look like a dog. Please upload a dog photo.")
+    else:
+        with st.spinner("Dog breed recognition..."):
+            breed, conf = classify_image(img)
+        st.write(f"**Breed:** {breed}")

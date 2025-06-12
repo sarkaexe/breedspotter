@@ -46,15 +46,25 @@ detector_embeddings = embed_texts(detector_texts)
 # --- 3. Initialize Hugging Face Llama-2 pipeline ---
 @st.cache_resource
 def get_generator():
-    return pipeline(
-        "text-generation",
-        model="meta-llama/Llama-2-7b-chat-hf",
-        device=0 if torch.cuda.is_available() else -1,
-        return_full_text=False,
-        temperature=0.7,
-        max_new_tokens=100
-    )
-generator = get_generator()
+    try:
+        return pipeline(
+            "text-generation",
+            model="meta-llama/Llama-2-7b-chat-hf",
+            device=0 if torch.cuda.is_available() else -1,
+            return_full_text=False,
+            temperature=0.7,
+            max_new_tokens=100
+        )
+    except OSError:
+        # Fallback to a smaller, lighter model if Llama is not available
+        return pipeline(
+            "text-generation",
+            model="distilgpt2",
+            device=-1,
+            return_full_text=False
+        )
+
+generator = get_generator()()
 
 # JSON schema for output validation
 RESPONSE_SCHEMA = {
@@ -122,4 +132,3 @@ if uploaded:
         st.markdown("#### Sources")
         for s in srcs:
             st.write(f"- {s}")
-

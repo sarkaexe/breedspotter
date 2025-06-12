@@ -73,7 +73,8 @@ def retrieve_and_generate(breed):
         f"Zidentyfikowano rasę: {breed}.\n"
         "Na podstawie poniższych fragmentów opisz temperament i potrzeby tej rasy "
         "w formie JSON z polami Rasa, Opis, Źródła:\n" +
-        "\n".join(docs)
+        "\n"."
+".join(str(d) for d in docs)
     )
     resp = openai.ChatCompletion.create(
         model="gpt-4", messages=[{"role": "user", "content": prompt}], temperature=0.2
@@ -106,4 +107,5 @@ if uploaded:
         st.markdown("#### Źródła")
         for s in srcs:
             st.write(f"- {s}")
+
 

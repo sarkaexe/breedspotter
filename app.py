@@ -77,20 +77,32 @@ def classify_image(img: Image.Image):
     score, idx = sims.max().item(), sims.argmax().item()
     return BREEDS[idx], score * 100
 
-# --- 6. Retrieval + generation using OpenAI ---
+# --- 6. Retrieval + generation with chain-of-thought ---
 def retrieve_and_generate(breed, conf):
     docs = profile_map.get(breed, [])[:3]
     sources = source_map.get(breed, [])[:3]
     prompt = (
-        f"Zidentyfikowano rasę: {breed} ({conf:.1f}%).\n"
-        + "\n".join(str(d) for d in docs)
+        f"Zidentyfikowano rasę: {breed} ({conf:.1f}%).\n\n"
+        "Proszę, najpierw wypisz krok po kroku, jak doszedłeś do wniosków o temperamencie i potrzebach tej rasy, "
+        "a następnie podaj ostateczną odpowiedź w formacie JSON z polami Rasa, Pewność, Opis, Źródła:\n\n"
+        "Fragmenty z bazy wiedzy:\n" + "\n".join(f"- {d}" for d in docs)
     )
-    resp = openai.ChatCompletion.create(
-        model="gpt-4", messages=[{"role": "user", "content": prompt}], temperature=0.2
+    resp = openai.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.2
     )
     text = resp.choices[0].message.content
+    # Split out chain-of-thought and JSON
+    json_start = text.find("{")
+    cot = text[:json_start].strip()
+    json_part = text[json_start:]
+    # Display chain-of-thought
+    st.markdown("**Kroki rozumowania:**")
+    st.text(cot)
+    # Parse and validate JSON
     try:
-        data = json.loads(text)
+        data = json.loads(json_part)
         jsonschema.validate(instance=data, schema=RESPONSE_SCHEMA)
         return data, True, sources
     except Exception:
@@ -106,6 +118,16 @@ if uploaded:
     if not is_dog(img):
         st.error("This does not look like a dog. Please upload a dog photo.")
     else:
-        with st.spinner("Dog breed recognition..."):
+        with st.spinner("Dog breed recognition... "):
             breed, conf = classify_image(img)
-        st.write(f"**Breed:** {breed}")
+        st.write(f"**Breed:** {breed} ({conf:.1f}%)")
+        with st.spinner("Generating description... "):
+            result, valid, srcs = retrieve_and_generate(breed, conf)
+        if not valid:
+            st.error("Validation of response failed.")
+        else:
+            st.markdown("### Opis temperamentu i potrzeb")
+            st.write(result.get("Opis") if isinstance(result, dict) else result)
+            st.markdown("#### Źródła")
+            for s in srcs:
+                st.write(f"- {s}")

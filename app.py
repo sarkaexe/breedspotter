@@ -116,9 +116,9 @@ if uploaded:
         try:
             with st.spinner("Generating description..."):
                 result, srcs = retrieve_and_generate(breed)
-        except openai.error.AuthenticationError:
+        except openai.errors.AuthenticationError:
             st.error("OpenAI API key is not configured or invalid. Please set it in Streamlit Secrets.")
-        except openai.error.RateLimitError:
+        except openai.errors.RateLimitError:
             st.error("API rate limit exceeded. Please check your OpenAI quota.")
         except Exception as e:
             st.error(f"An error occurred: {e}")
@@ -128,4 +128,3 @@ if uploaded:
             st.markdown("#### Sources")
             for s in srcs:
                 st.write(f"- {s}")
-

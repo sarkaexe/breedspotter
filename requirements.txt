@@ -4,8 +4,8 @@ torchvision==0.22.1
 transformers==4.32.0
 tokenizers==0.13.3
 chromadb==0.4.3
-guardrails==0.0.6
 pillow
 pandas
 ftfy
 regex
+jsonschema

@@ -18,8 +18,8 @@ st.set_page_config(page_title="🐶 BreedSpotter", layout="centered")
 # 2) Wczytywanie metadanych
 @st.cache_data
 def load_metadata():
-    df = pd.read_csv("stanford_dogs_metadata.csv")  # filepath, breed
-    prof = pd.read_csv("breeds_profiles.csv")       # breed, text, source
+    df = pd.read_csv("stanford_dogs_metadata.csv")
+    prof = pd.read_csv("breeds_profiles.csv")
     profile_map = prof.groupby("breed")["text"].apply(list).to_dict()
     return df, profile_map
 
@@ -55,7 +55,7 @@ RESPONSE_SCHEMA = {
     "required": ["Rasa", "Opis"]
 }
 
-# 6) Inicjalizacja generatora HF z GPT-Neo-125M
+# 6) Inicjalizacja generatora HF z GPT-Neo 125M
 @st.cache_resource
 def get_generator() -> TextGenerationPipeline:
     return pipeline(
@@ -77,7 +77,7 @@ def classify_image(img: Image.Image):
     idx = sims.argmax().item()
     return BREEDS[idx]
 
-# 8) Retrieval + generowanie opisu (3 zdania)
+# 8) Retrieval + generowanie opisu (3 zdania, bez powtórzeń)
 def retrieve_and_generate(breed: str):
     # Pobierz top-3 snippetów
     raw_docs = profile_map.get(breed, [])
@@ -107,8 +107,16 @@ def retrieve_and_generate(breed: str):
     if text.startswith(prompt):
         text = text[len(prompt):].lstrip()
 
-    # Weź pierwsze 3 zdania
-    sentences = [s.strip() for s in text.split('.') if s.strip()]
+    # Podziel na zdania i oczyść
+    raw_sents = [s.strip() for s in text.split('.') if s.strip()]
+    # Usuń konsekutywne duplikaty
+    sentences = []
+    prev = None
+    for s in raw_sents:
+        if s != prev:
+            sentences.append(s)
+        prev = s
+    # Weź pierwsze 3 unikalne zdania
     paragraph = ". ".join(sentences[:3])
     if paragraph and not paragraph.endswith('.'):
         paragraph += '.'
@@ -134,3 +142,4 @@ if uploaded:
 
     st.markdown("### Description")
     st.write(result["Opis"])
+

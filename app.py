@@ -19,13 +19,12 @@ st.set_page_config(page_title="🐶 BreedSpotter", layout="centered")
 # 2) Wczytywanie metadanych
 @st.cache_data
 def load_metadata():
-    df = pd.read_csv("stanford_dogs_metadata.csv")  # filepath, breed
-    prof = pd.read_csv("breeds_profiles.csv")       # breed, text, source
+    df = pd.read_csv("stanford_dogs_metadata.csv")
+    prof = pd.read_csv("breeds_profiles.csv")
     profile_map = prof.groupby("breed")["text"].apply(list).to_dict()
-    source_map  = prof.groupby("breed")["source"].apply(list).to_dict()
-    return df, profile_map, source_map
+    return df, profile_map
 
-df, profile_map, source_map = load_metadata()
+df, profile_map = load_metadata()
 
 # 3) Ładowanie CLIP
 @st.cache_resource
@@ -51,11 +50,10 @@ breed_embeddings = embed_breeds(BREEDS)
 RESPONSE_SCHEMA = {
     "type": "object",
     "properties": {
-        "Rasa":   {"type": "string"},
-        "Opis":   {"type": "string"},
-        "Źródła": {"type": "array", "items": {"type": "string"}}
+        "Rasa": {"type": "string"},
+        "Opis": {"type": "string"},
     },
-    "required": ["Rasa", "Opis", "Źródła"]
+    "required": ["Rasa", "Opis"]
 }
 
 # 6) Inicjalizacja generatora HF z GPT-Neo 125M
@@ -68,7 +66,7 @@ def get_generator() -> TextGenerationPipeline:
         truncation=True
     )
 
-generator: TextGenerationPipeline = get_generator()
+generator = get_generator()
 
 # 7) Funkcja klasyfikująca rasę
 def classify_image(img: Image.Image):
@@ -80,50 +78,49 @@ def classify_image(img: Image.Image):
     idx = sims.argmax().item()
     return BREEDS[idx]
 
-# 8) Retrieval + generowanie opisu z GPT-Neo-125M
+# 8) Retrieval + generowanie opisu
 def retrieve_and_generate(breed: str):
-    # 1) Pobierz top-3 snippetów (filtrując NaN/puste)
-    raw_docs = profile_map.get(breed, [])
-    docs = [d for d in raw_docs if isinstance(d, str) and d.strip()][:3]
-
-    # 2) Jeśli nie ma żadnych snippetów, użyj prompta ogólnego
-    if docs:
+    # Pobierz top-3 snippetów
+    raw_docs = prof := profile_map.get(breed, [])
+    docs = [d for d in prof if isinstance(d, str) and d.strip()][:3]
+    if not docs:
+        # fallback: czysta generacja
+        prompt = (
+            f"Breed: {breed}\n"
+            "Provide a detailed, 3-sentence description of the temperament "
+            "and needs of this dog breed based on your general canine knowledge.\n"
+        )
+    else:
         snippets = "\n".join(f"- {d}" for d in docs)
         prompt = (
             f"Breed: {breed}\n"
-            "Provide a detailed, 3-sentence description of the temperament and needs of this dog breed based on the following information:\n"
+            "Provide a detailed, 3-sentence description of the temperament "
+            "and needs of this dog breed based on the following snippets:\n"
             f"{snippets}\n"
         )
-    else:
-        # fallback: generuj z wiedzy modelu
-        prompt = (
-            f"Breed: {breed}\n"
-            "Provide a detailed, 3-sentence description of the temperament and needs of this dog breed based on your general canine knowledge.\n"
-        )
 
-    # 3) Przygotuj źródła (mogą być puste)
-    raw_srcs = source_map.get(breed, [])
-    sources = [s for s in raw_srcs if isinstance(s, str) and s.strip()][:3]
-
-    # 4) Generacja przez GPT-Neo
+    # Generuj
     out = generator(prompt, max_new_tokens=80)
     text = out[0].get("generated_text") or out[0].get("text", "")
 
-    # 5) Wyciągnij pierwsze 3 zdania
+    # Usuń echo prompta, jeśli wystąpiło
+    if text.startswith(prompt):
+        text = text[len(prompt):].lstrip()
+
+    # Weź pierwsze 3 zdania
     sentences = [s.strip() for s in text.split('.') if s.strip()]
     first_three = '. '.join(sentences[:3])
     if first_three and not first_three.endswith('.'):
         first_three += '.'
 
-    # 6) Zbuduj i zwaliduj wynik
-    result = {"Rasa": breed, "Opis": first_three, "Źródła": sources}
+    result = {"Rasa": breed, "Opis": first_three}
     jsonschema.validate(instance=result, schema=RESPONSE_SCHEMA)
-    return result, sources
+    return result
 
 # 9) UI Streamlit
 st.title("🐶 BreedSpotter — Dog breed recognition")
 
-uploaded = st.file_uploader("Upload dog's photo", type=["jpg","jpeg","png"])
+uploaded = st.file_uploader("Upload dog's photo", type=["jpg", "jpeg", "png"])
 if uploaded:
     img = Image.open(uploaded).convert("RGB")
     st.image(img, caption="Your photo", use_container_width=True)
@@ -133,11 +130,7 @@ if uploaded:
     st.write(f"**Breed:** {breed}")
 
     with st.spinner("Generating description..."):
-        result, srcs = retrieve_and_generate(breed)
+        result = retrieve_and_generate(breed)
 
     st.markdown("### Description")
     st.write(result["Opis"])
-
-    st.markdown("#### Sources")
-    for s in srcs:
-        st.write(f"- {s}")

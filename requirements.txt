@@ -2,9 +2,10 @@ streamlit
 torch==2.7.1
 torchvision==0.22.1
 transformers==4.32.0
+tokenizers==0.13.3
 chromadb==0.4.3
+guardrails==2.0.0
 codecov==2.1.13
-tokenizers==0.12.1
 pillow
 pandas
 ftfy

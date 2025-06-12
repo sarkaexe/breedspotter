@@ -1,159 +1,161 @@
 breed,text,source
-Affenpinscher,,
-Afghan Hound,,
-Airedale Terrier,,
-Akita,,
-Alaskan Malamute,,
-American Bulldog,,
-American Cocker Spaniel,,
-American Eskimo Dog,,
-American Foxhound,,
-American Pit Bull Terrier,,
-American Staffordshire Terrier,,
-American Water Spaniel,,
-Anatolian Shepherd Dog,,
-Australian Cattle Dog,,
-Australian Shepherd,,
-Australian Terrier,,
-Basenji,,
-Basset Hound,,
-Beagle,,
-Bearded Collie,,
-Bedlington Terrier,,
-Belgian Malinois,,
-Belgian Sheepdog,,
-Belgian Tervuren,,
-Bernese Mountain Dog,,
-Bichon Frise,,
-Black and Tan Coonhound,,
-Black Russian Terrier,,
-Bloodhound,,
-Border Collie,,
-Border Terrier,,
-Borzoi,,
-Boston Terrier,,
-Bouvier des Flandres,,
-Boxer,,
-Boykin Spaniel,,
-Briard,,
-Brittany,,
-Brussels Griffon,,
-Bull Terrier,,
-Bulldog,,
-Bullmastiff,,
-Cairn Terrier,,
-Cavalier King Charles Spaniel,,
-Chesapeake Bay Retriever,,
-Chihuahua,,
-Chinese Crested,,
-Chinese Shar-Pei,,
-Chow Chow,,
-Clumber Spaniel,,
-Cocker Spaniel,,
-Collie,,
-Curly-Coated Retriever,,
-Dachshund,,
-Dalmatian,,
-Dandie Dinmont Terrier,,
-Doberman Pinscher,,
-Dogue de Bordeaux,,
-English Cocker Spaniel,,
-English Foxhound,,
-English Setter,,
-English Springer Spaniel,,
-English Toy Spaniel,,
-Entlebucher Mountain Dog,,
-Field Spaniel,,
-Finnish Spitz,,
-Flat-Coated Retriever,,
-French Bulldog,,
-German Pinscher,,
-German Shepherd Dog,,
-German Shorthaired Pointer,,
-German Wirehaired Pointer,,
-Giant Schnauzer,,
-Glen of Imaal Terrier,,
-Golden Retriever,,
-Gordon Setter,,
-Great Dane,,
-Great Pyrenees,,
-Greater Swiss Mountain Dog,,
-Greyhound,,
-Havanese,,
-Ibizan Hound,,
-Icelandic Sheepdog,,
-Irish Setter,,
-Irish Terrier,,
-Irish Water Spaniel,,
-Irish Wolfhound,,
-Italian Greyhound,,
-Japanese Chin,,
-Keeshond,,
-Kerry Blue Terrier,,
-Komondor,,
-Kuvasz,,
-Labrador Retriever,,
-Lakeland Terrier,,
-Leonberger,,
-Lhasa Apso,,
-Lowchen,,
-Maltese,,
-Manchester Terrier,,
-Mastiff,,
-Miniature Bull Terrier,,
-Miniature Pinscher,,
-Miniature Schnauzer,,
-Newfoundland,,
-Norfolk Terrier,,
-Norwegian Buhund,,
-Norwegian Elkhound,,
-Norwegian Lundehund,,
-Norwich Terrier,,
-Nova Scotia Duck Tolling Retriever,,
-Old English Sheepdog,,
-Otterhound,,
-Papillon,,
-Parson Russell Terrier,,
-Pekingese,,
-Pembroke Welsh Corgi,,
-Petit Basset Griffon Vendéen,,
-Pharaoh Hound,,
-Plott Hound,,
-Pointer,,
-Polish Lowland Sheepdog,,
-Pomeranian,,
-Poodle,,
-Portuguese Water Dog,,
-Saint Bernard,,
-Saluki,,
-Samoyed,,
-Schipperke,,
-Scottish Deerhound,,
-Scottish Terrier,,
-Sealyham Terrier,,
-Shetland Sheepdog,,
-Shiba Inu,,
-Shih Tzu,,
-Siberian Husky,,
-Silky Terrier,,
-Smooth Fox Terrier,,
-Soft Coated Wheaten Terrier,,
-Spinone Italiano,,
-Staffordshire Bull Terrier,,
-Standard Schnauzer,,
-Sussex Spaniel,,
-Tibetan Mastiff,,
-Tibetan Terrier,,
-Toy Fox Terrier,,
-Treeing Walker Coonhound,,
-Vizsla,,
-Weimaraner,,
-Welsh Springer Spaniel,,
-Welsh Terrier,,
-West Highland White Terrier,,
-Whippet,,
-Wire Fox Terrier,,
-Wirehaired Pointing Griffon,,
-Xoloitzcuintli,,
-Yorkshire Terrier,,
+breed,description
+Affenpinscher,"A small, sturdy toy dog with a monkey-like expression, originally bred in Germany to hunt rats. Bold and curious, they are affectionate with their families. Their dense, wiry coat needs regular grooming to prevent mats."
+Afghan Hound,"An elegant sighthound with a flowing coat and dignified air, prized for its speed and sight-based hunting in Afghanistan. They are independent and aloof yet form strong bonds with their owners. Weekly coat care and ample running space are essential."
+Airedale Terrier,"The largest of the terriers, known as the “King of Terriers,” originally bred for hunting otters and rats in England. Intelligent and energetic, they excel in obedience and protection work. Their wiry coat benefits from regular hand-stripping."
+Akita,"A powerful, dignified spitz breed from Japan, revered for its loyalty and protective nature. Aloof with strangers but deeply affectionate with family, they require firm, consistent training. Their thick double coat sheds seasonally and needs brushing."
+Alaskan Malamute,"A heavy-boned, strong Arctic sled dog bred for hauling heavy freight over long distances. Friendly and outgoing, they thrive on human companionship and rigorous exercise. Their dense double coat sheds heavily twice yearly and demands frequent brushing."
+American Bulldog,"A muscular, athletic working dog developed in the U.S. for farm work and guarding. Confident and loyal, they are gentle with children when socialized. Their short coat is low-maintenance, but they need daily exercise to prevent boredom."
+American Cocker Spaniel,"The smallest of the sporting Spaniels, known for its expressive eyes and silky, feathered coat. Affectionate and playful, they make excellent family pets. Their long ears and coat require regular grooming to avoid mats."
+American Eskimo Dog,"A lively, fluffy spitz with a bright white double coat and fox-like expression. Intelligent and alert, they thrive on mental stimulation and human interaction. Their profuse coat needs frequent brushing, especially during heavy shedding."
+American Foxhound,"A sleek, speedy scent hound bred for pack hunting foxes in the American countryside. Gentle and sociable, they have high exercise needs and a strong hunting drive. Their short coat is easy-care and their bay is distinctive."
+American Pit Bull Terrier,"A muscular, agile dog known for its strength and gameness, originally bred for bull-baiting and farm work. Intelligent and people-oriented, they excel in canine sports and therapy roles. Their short coat is very low-maintenance."
+American Staffordshire Terrier,"A stocky, powerful terrier with a friendly disposition, known for its courage and loyalty. They are confident and affectionate with family but need consistent training. Their short coat is easy to care for and requires minimal grooming."
+American Water Spaniel,"A versatile sporting dog from Wisconsin, bred for retrieving in water and land. Energetic and eager to please, they excel in hunting and agility. Their curly, waterproof coat needs regular trimming and brushing."
+Anatolian Shepherd Dog,"A large, rugged guardian from Turkey, bred to protect livestock. Independent and protective, they require early socialization and firm leadership. Their short to medium coat needs minimal grooming but seasonal brushing."
+Australian Cattle Dog,"A sturdy, high-energy herding dog from Australia, known for its endurance and intelligence. Alert and protective, they need plenty of mental and physical stimulation. Their dense double coat is weather-resistant and sheds moderately."
+Australian Shepherd,"A medium-sized herding dog with a striking coat and high work drive. Intelligent and versatile, they excel in agility, herding, and obedience. Their weather-resistant coat benefits from weekly brushing to reduce shedding."
+Australian Terrier,"A small, robust terrier with a wiry coat, originally bred for rodent control in Australia. Fearless and affectionate, they make excellent watchdogs and companions. Their coat needs hand-stripping or trimming twice yearly."
+Basenji,"A small African hunting dog, famous for its yodel-like “baroo” instead of barking. Independent and curious, they form strong bonds but can be aloof. Their short coat is easy-care and they are known for cat-like cleanliness."
+Basset Hound,"A low-slung scent hound with long ears and droopy expression, bred for trailing game. Gentle and friendly, they can be stubborn on scent trails. Their smooth coat is easy to groom but their ears need regular cleaning."
+Beagle,"A small, merry hound with a keen nose, bred for pack hunting rabbits. Friendly and curious, they thrive on scent work and social interaction. Their short coat is easy-care but they shed moderately."
+Bearded Collie,"A medium-sized herding dog with a shaggy, double coat, known for agility and endurance. Playful and biddable, they require daily exercise and mental challenges. Their long coat needs frequent brushing to prevent mats."
+Bedlington Terrier,"A unique terrier with a lamb-like appearance and curly, woolly coat. Spirited and good-natured, they are both alert watchdogs and affectionate companions. Coat maintenance includes regular clipping and brushing."
+Belgian Malinois,"A highly driven, athletic herding dog excelling in police and military roles. Alert and trainable, they bond deeply with their handlers but need vigorous daily exercise. Their short coat is easy to maintain."
+Belgian Sheepdog,"Also called the Groenendael, a graceful herding dog with a long black coat. Intelligent and protective, they excel in obedience and agility. Their luxurious coat requires weekly brushing to prevent tangles."
+Belgian Tervuren,"A versatile herding dog with a dense fawn-and-black coat. Energetic and intelligent, they thrive on work and companionship. Regular brushing keeps their double coat healthy and free of mats."
+Bernese Mountain Dog,"A large, tri-colored working breed from Switzerland, known for its gentle temperament. Affectionate and calm, they make excellent family dogs. Their long coat needs weekly brushing to manage shedding."
+Bichon Frise,"A small, cheerful companion dog with a curly white coat and playful personality. Social and affectionate, they enjoy human company and moderate play. Their coat needs regular grooming and professional trimming."
+Black and Tan Coonhound,"A sleek, stamina-rich scent hound bred for raccoon hunting. Gentle and laid-back at home but determined on a trail. Their short coat is easy-care and their ears require routine cleaning."
+Black Russian Terrier,"A robust, large guard dog developed in Russia, combining strength with intelligence. Loyal and protective, they need consistent training and socialization. Their dense, coarse coat needs regular grooming to prevent matting."
+Bloodhound,"A large scent hound famed for its incredible tracking ability, with loose skin and droopy ears. Gentle and patient, they are family-friendly but highly focused on scents. Their short coat is easy to groom, though wrinkles need cleaning."
+Border Collie,"A medium-sized herder recognized as one of the most intelligent and energetic breeds. Highly trainable, they excel in agility, herding, and obedience. Their coat—smooth or rough—requires regular brushing to control shedding."
+Border Terrier,"A small, affectionate terrier with a dense, wiry coat, bred for fox hunting. Friendly and adaptable, they suit active families and rural life. Coat care includes hand-stripping or clipping twice yearly."
+Borzoi,"An elegant Russian sighthound with a silky, wavy coat and dignified demeanor. Gentle and independent, they need regular exercise but enjoy downtime with family. Their long coat requires weekly brushing to avoid tangles."
+Boston Terrier,"A compact, tuxedoed “American Gentleman” with a friendly and lively personality. Affectionate and easily trained, they thrive in urban environments. Their short coat is low-maintenance, and they need moderate exercise."
+Bouvier des Flandres,"A powerful, rugged farm dog with a coarse, tousled coat, originally from Belgium. Calm and protective, they excel in draft work and obedience. Coat maintenance includes regular trimming and brushing."
+Boxer,"A medium-large, muscular dog with boundless energy and a playful nature. Loyal and protective, they form strong bonds with family and children. Their smooth coat is easy-care but they need daily exercise and mental stimulation."
+Boykin Spaniel,"A compact, water-loving retriever from South Carolina with a rich liver coat. Friendly and versatile, they excel in flushing and retrieving. Their medium coat requires regular brushing and occasional trimming."
+Briard,"A large French herding dog with a long, wavy coat and expressive eyebrows. Loyal and intelligent, they make excellent guardians and companions. Their coat needs frequent brushing to prevent mats."
+Brittany,"A medium-sized sporting dog with a compact build and orange-and-white coat. Energetic and eager to please, they excel in bird hunting and agility. Their short coat is easy-care and sheds moderately."
+Brussels Griffon,"A small companion breed with a distinctive flattened face and expressive eyes. Affectionate and alert, they form strong bonds with owners. Coat types vary; rough coats need hand-stripping, smooth coats require minimal grooming."
+Bull Terrier,"A muscular, egg-headed terrier known for its playful and clownish temperament. Stubborn yet affectionate, they need consistent, firm training. Their short coat is easy to maintain but they need daily exercise."
+Bulldog,"A stocky, loose-skinned British breed with a distinctive pushed-in nose and gentle temperament. Laid-back and affectionate, they are excellent companions. Their short coat is low-maintenance, and wrinkles need regular cleaning."
+Bullmastiff,"A large, powerful guard dog combining strength with a calm demeanor. Protective and loyal, they are gentle with family but wary of strangers. Their short coat is easy to care for, and they need moderate exercise."
+Cairn Terrier,"A small, hardy terrier with a shaggy coat, famous as the original “Toto.” Alert and spirited, they enjoy digging and exploring. Their weather-resistant coat needs regular brushing and occasional trimming."
+Cavalier King Charles Spaniel,"A small, affectionate toy breed with large, dark eyes and a silky coat. Gentle and friendly, they thrive on human companionship. Their medium-length coat requires regular brushing to prevent mats."
+Chesapeake Bay Retriever,"A rugged, water-resistant retriever bred for duck hunting in icy waters. Intelligent and determined, they excel in retrieving and obedience. Their dense, wavy coat needs minimal grooming but benefits from occasional brushing."
+Chihuahua,"One of the smallest dog breeds, known for its big personality and alert nature. Devoted and lively, they form strong bonds with a single person. Their coat can be smooth or long and needs regular brushing if long-coated."
+Chinese Crested,"A small, elegant breed available in hairless and powderpuff varieties, known for its affectionate nature. Playful and alert, they enjoy being the center of attention. Hairless varieties need skin care; powderpuffs require regular grooming."
+Chinese Shar-Pei,"A medium-sized, wrinkled dog with a broad head and blue-black tongue, originating in China. Loyal and reserved, they bond closely with family. Their short coat is low-maintenance but wrinkles need cleaning to prevent infections."
+Chow Chow,"A sturdy spitz with a lion-like mane and blue-black tongue from China. Independent and aloof, they are devoted to their family. Their thick double coat requires daily brushing, especially during shedding seasons."
+Clumber Spaniel,"A heavy-boned, gentle gundog with a dense white coat marked by lemon or orange. Calm and affectionate, they make relaxed companions. Their coat needs frequent brushing to remove loose hair and prevent tangles."
+Cocker Spaniel,"A popular sporting breed with a silky coat and cheerful disposition. Affectionate and good-natured, they excel in companionship and field work. Their coat requires regular grooming and trimming to avoid mats."
+Collie,"A graceful herding breed with a long, flowing coat or smooth variety, renowned for intelligence. Loyal and gentle, they make excellent family dogs. Long-coated Collies need frequent brushing to prevent mats."
+Curly-Coated Retriever,"A large sporting dog with a distinctive curly waterproof coat, bred for retrieving. Confident and independent, they excel in water work. Their unique coat requires minimal grooming but sheds seasonally."
+Dachshund,"A small hound with a long body and short legs, bred for badger hunting. Courageous and lively, they form strong bonds with family. Coat can be smooth, long, or wirehaired and grooming needs vary accordingly."
+Dalmatian,"A medium-sized sporting breed with a short white coat marked by black or liver spots. Energetic and smart, they excel in running and agility. Their coat is easy-care but sheds heavily year-round."
+Dandie Dinmont Terrier,"A small Scottish terrier with a distinctive topknot and long body. Affectionate and dignified, they enjoy both indoor life and outdoor exploration. Their pepper-and-salt coat needs regular stripping or hand-trimming."
+Doberman Pinscher,"A sleek, muscular guard dog known for intelligence and loyalty. Alert and energetic, they excel in protection, obedience, and agility. Their short coat is easy to maintain and they require daily exercise."
+Dogue de Bordeaux,"Also called the French Mastiff, a massive, powerful breed with a large head and gentle nature. Loyal and affectionate with family, they are protective of strangers. Their short coat is low-maintenance, and they need moderate exercise."
+English Cocker Spaniel,"A merry, medium-sized sporting dog with a silky coat and expressive eyes. Affectionate and adaptable, they’re excellent family pets and hunters. Their coat needs regular brushing and professional trimming."
+English Foxhound,"A sturdy scent hound bred for fox hunting in packs across England. Friendly and tolerant, they are good with families but need vigorous exercise. Their short coat is easy-care and they have a distinctive bay."
+English Setter,"A graceful gundog with a feathered coat and elegant stance, bred for bird pointing. Gentle and friendly, they enjoy family life and fieldwork. Their long, silky coat requires frequent brushing to avoid tangles."
+English Springer Spaniel,"A versatile hunting dog with a medium-length coat and boundless energy. Affectionate and eager to please, they excel in flushing and retrieving. Their coat needs regular grooming and trimming."
+English Toy Spaniel,"A small, aristocratic toy breed with a domed head and short muzzle. Gentle and affectionate, they are devoted lapdogs. Their silky coat needs daily brushing to prevent mats."
+Entlebucher Mountain Dog,"The smallest of the Swiss Mountain Dogs, sturdy with tri-color markings. Loyal and energetic, they excel in herding and agility. Their short coat is weather-resistant and easy to groom."
+Field Spaniel,"A medium-sized spaniel with a silky, liver or black coat, bred for flushing game. Affectionate and calm, they make good family pets. Their coat needs regular brushing to prevent mats."
+Finnish Spitz,"A friendly, foxy-faced spitz from Finland, known for its bright red coat and unique yodel-like bark. Alert and lively, they make excellent watchdogs and companions. Their dense double coat sheds heavily twice yearly."
+Flat-Coated Retriever,"A joyful, medium-large retriever with a sleek black or liver coat. Friendly and exuberant, they thrive on retrieving and companionship. Their glossy coat needs regular brushing to prevent mats."
+French Bulldog,"A compact, muscular companion dog with bat-like ears and a playful demeanor. Affectionate and adaptable, they suit apartment life. Their short coat is easy-care but facial wrinkles need regular cleaning."
+German Pinscher,"A medium-sized, smooth-coated guard dog known for alertness and elegance. Energetic and intelligent, they require regular exercise and training. Their short coat is low-maintenance and sheds minimally."
+German Shepherd Dog,"A versatile, highly intelligent working breed renowned for police, military, and service work. Loyal and courageous, they bond closely with family. Their double coat needs regular brushing to manage shedding."
+German Shorthaired Pointer,"A versatile sporting dog with a short coat and boundless energy, bred for pointing and retrieving. Friendly and trainable, they excel in fieldwork and family life. Their coat is easy to care for and sheds moderately."
+German Wirehaired Pointer,"A sturdy hunting dog with a wiry coat and distinctive beard, bred for harsh conditions. Energetic and intelligent, they need mental and physical stimulation. Their coat requires trimming and brushing to maintain texture."
+Giant Schnauzer,"A large, powerful working dog with a dense, wiry coat and distinctive beard. Loyal and protective, they excel in guard and police work. Their coat needs regular clipping and brushing to prevent mats."
+Glen of Imaal Terrier,"A sturdy Irish terrier with a harsh, broken coat, known for its courage. Loyal and independent, they form strong bonds with family. Their coat needs hand-stripping or clipping twice yearly."
+Golden Retriever,"A friendly, intelligent retriever with a dense water-repellent coat and love for play. Gentle and eager to please, they are excellent family pets and working dogs. Their coat requires regular brushing to manage shedding."
+Gordon Setter,"A large, elegant setter with a glossy black-and-tan coat, bred for bird pointing. Loyal and dignified, they excel in fieldwork and companionship. Their coat needs regular brushing to prevent tangles."
+Great Dane,"A giant, elegant sighthound with a gentle and affectionate nature. Despite their size, they are known as “gentle giants.” Their short coat is easy-care and they require moderate exercise."
+Great Pyrenees,"A large, majestic livestock guardian with a thick white double coat. Calm and protective, they bond with family and livestock. Their dense coat needs frequent brushing to prevent mats."
+Greater Swiss Mountain Dog,"A large, tri-colored farm dog with strength and a calm temperament. Loyal and gentle, they excel in drafting and guarding. Their short coat is easy to maintain but sheds seasonally."
+Greyhound,"A sleek, fast sighthound with a gentle and quiet temperament off the track. Affectionate and adaptable, they make excellent companions. Their short coat is very low-maintenance."
+Havanese,"A small, cheerful companion dog with a silky coat and expressive eyes. Friendly and adaptable, they thrive on human company. Their coat needs daily brushing and occasional trims."
+Ibizan Hound,"A tall, elegant sighthound with a short coat and upright ears, bred for rabbit hunting. Independent and active, they need daily exercise. Their coat is easy-care and sheds minimally."
+Icelandic Sheepdog,"A hardy spitz-type herding dog from Iceland, known for its friendly nature. Energetic and vocal, they excel in herding and agility. Their thick double coat needs seasonal brushing."
+Irish Setter,"A striking red setter with a flowing coat and outgoing personality. Energetic and affectionate, they thrive on active family life and fieldwork. Their silky coat requires regular brushing to avoid mats."
+Irish Terrier,"A bold, fiery red terrier with a wiry coat, known for courage. Loyal and spirited, they make devoted companions. Their coat needs hand-stripping or clipping twice yearly."
+Irish Water Spaniel,"A large, curly-coated spaniel with water-resistant curls and a rat-tail, bred for retrieving. Intelligent and playful, they excel in water work. Their dense coat requires regular grooming and trimming."
+Irish Wolfhound,"The tallest of all dog breeds, a gentle giant originally bred for hunting wolves. Calm and dignified, they are affectionate with family. Their rough coat needs periodic brushing to remove loose hair."
+Italian Greyhound,"A miniature sighthound with a slender build and affectionate nature. Sensitive and playful, they enjoy lap time and short runs. Their fine coat is easy to care for but they are sensitive to cold."
+Japanese Chin,"A small, elegant toy breed with a silky coat and distinctive pushed-in face. Affectionate and charming, they thrive on attention. Their coat needs regular brushing and occasional trimming."
+Keeshond,"A medium-sized spitz with a plush silver-and-black coat and ruff, known for alertness. Friendly and outgoing, they excel as companions and watchdogs. Their profuse coat needs frequent brushing."
+Kerry Blue Terrier,"A striking blue-gray terrier with a soft, wavy coat, originally from Ireland. Spirited and intelligent, they make loyal companions. Their hypoallergenic coat needs regular grooming and hand-stripping."
+Komondor,"A large Hungarian livestock guardian with a corded, woolly white coat. Protective and independent, they bond closely with their flock. Their unique coat requires careful separation of cords and occasional bathing."
+Kuvasz,"A large, white Hungarian guardian dog with a dense double coat. Loyal and protective, they excel in guarding livestock. Their coat needs regular brushing to prevent mats."
+Labrador Retriever,"A friendly, versatile retriever with a short, dense coat, famous for work in hunting, assistance, and search. Outgoing and obedient, they form strong family bonds. Their coat is easy-care but sheds seasonally."
+Lakeland Terrier,"A small British terrier with a wiry coat and spirited temperament. Confident and active, they enjoy digging and chasing. Their coat needs hand-stripping or clipping twice yearly."
+Leonberger,"A giant, gentle breed with a lion-like mane and calm demeanor from Germany. Loyal and friendly, they excel as family companions and therapy dogs. Their thick double coat needs frequent brushing."
+Lhasa Apso,"A small, long-haired Tibetan sentinel with a lively personality. Alert and independent, they make excellent watchdogs. Their flowing coat requires daily brushing or can be trimmed for easier care."
+Lowchen,"Also called the “Little Lion Dog,” a small companion with a silky coat and proud carriage. Friendly and playful, they enjoy human company. Their coat needs regular grooming and optional lion trim."
+Maltese,"A small, tuxedoed companion dog with a long, silky white coat. Gentle and affectionate, they thrive on attention. Their coat requires daily brushing or regular trims to keep it tangle-free."
+Manchester Terrier,"A sleek, alert terrier in standard and toy sizes, known for ratting prowess. Quick and intelligent, they bond with active owners. Their smooth coat is easy to maintain."
+Mastiff,"A massive, gentle guardian breed with a short coat and calm demeanor. Loyal and protective, they are patient with family. Their coat is easy-care, and they need moderate exercise."
+Miniature Bull Terrier,"A smaller version of the Bull Terrier, with the same egg-shaped head and playful nature. Spirited and affectionate, they need consistent training. Their short coat is very low-maintenance."
+Miniature Pinscher,"A compact, fearless toy breed with a smooth coat and high energy. Intelligent and curious, they excel in obedience and agility. Their short coat requires minimal grooming."
+Miniature Schnauzer,"A small, spirited terrier with a wiry coat and distinctive beard. Alert and friendly, they make excellent watchdogs and companions. Their coat needs regular clipping and brushing."
+Newfoundland,"A massive, gentle water dog with a thick double coat and webbed feet. Sweet-tempered and devoted, they excel in water rescue. Their dense coat requires frequent brushing and seasonal grooming."
+Norfolk Terrier,"A small, sturdy terrier with folded ears and a wiry coat, bred for vermin control. Spirited and affectionate, they enjoy both city and country life. Their coat needs hand-stripping or clipping twice yearly."
+Norwegian Buhund,"A medium spitz with a curly tail and dense coat, bred for herding in Norway. Energetic and friendly, they excel in agility and companionship. Their double coat needs regular brushing."
+Norwegian Elkhound,"A versatile spitz-type hunting dog with a thick gray coat, known for bravery. Loyal and independent, they are excellent watchdogs. Their dense double coat sheds heavily and needs frequent brushing."
+Norwegian Lundehund,"A rare, agile spitz with extra toes and flexible joints, bred for puffin hunting. Curious and energetic, they need mental and physical stimulation. Their thick double coat requires regular brushing."
+Norwich Terrier,"A small terrier with erect ears and a wiry coat, known for friendliness. Spirited and adaptable, they suit both rural and urban homes. Their coat needs hand-stripping or clipping twice yearly."
+Nova Scotia Duck Tolling Retriever,"A small retriever with a red coat and white markings, bred for tolling and retrieving waterfowl. Energetic and intelligent, they excel in agility and obedience. Their water-resistant coat needs regular brushing."
+Old English Sheepdog,"A large, shaggy herding dog with a profuse coat and bobtail. Gentle and adaptable, they thrive on companionship and work. Their long coat requires daily brushing or professional grooming."
+Otterhound,"A large scent hound with a coarse, water-resistant coat and webbed feet, bred for otter hunting. Friendly and boisterous, they need plenty of exercise. Their dense coat needs regular grooming and trimming."
+Papillon,"A small, elegant toy spaniel with butterfly-like ears and a silky coat. Lively and intelligent, they excel in obedience and agility. Their fine coat needs regular brushing to prevent mats."
+Parson Russell Terrier,"A small, energetic terrier with a smooth or broken coat, bred for fox hunting. Bold and hardworking, they need plenty of exercise and mental stimulation. Their coat requires regular brushing and occasional hand-stripping."
+Pekingese,"A small, dignified companion with a flat face and long, flowing coat. Independent and loyal, they form strong bonds with owners. Their abundant coat needs daily brushing and occasional trimming."
+Pembroke Welsh Corgi,"A sturdy, short-legged herding dog with a fox-like expression, known for intelligence. Friendly and outgoing, they adapt well to families. Their short double coat sheds seasonally and needs brushing."
+Petit Basset Griffon Vendéen,"A small, rough-coated hound with a merry temperament, bred for scent hunting. Friendly and vocal, they enjoy family life and exercise. Their weather-resistant coat needs regular grooming and stripping."
+Pharaoh Hound,"An elegant Maltese descendent with a sleek tan coat and distinctive amber eyes. Intelligent and affectionate, they are good-natured and playful. Their short coat is easy-care and they need daily exercise."
+Plott Hound,"A muscular, brindle-coated scent hound from North Carolina, bred for boar hunting. Loyal and fearless, they need firm training and ample exercise. Their short coat is easy to groom and sheds moderately."
+Pointer,"A medium-large sporting dog with a smooth coat and classic pointing stance. Energetic and trainable, they excel in fieldwork and family activities. Their short coat is easy-care and sheds moderately."
+Polish Lowland Sheepdog,"A medium herding dog with a shaggy double coat and expressive eyes. Intelligent and energetic, they need mental challenges and grooming. Their long coat requires frequent brushing to prevent mats."
+Pomeranian,"A small, fluffy spitz with a vivacious personality, known for its fox-like face. Bold and affectionate, they enjoy human companionship. Their thick double coat requires daily brushing to manage shedding."
+Poodle,"An extremely intelligent, hypoallergenic breed available in toy, miniature, and standard sizes. Versatile and trainable, they excel in obedience, agility, and companionship. Their curly coat needs regular professional grooming."
+Portuguese Water Dog,"A medium-sized water dog with a curly or wavy coat, bred for fishing tasks. Energetic and affectionate, they love swimming and family activities. Their coat is low-shedding but needs periodic grooming."
+Saint Bernard,"A massive, gentle rescue dog from the Alps with a thick coat and sweet temperament. Patient and loyal, they are excellent families and search-and-rescue partners. Their coat needs regular brushing to manage shedding."
+Saluki,"An ancient, graceful sighthound with a silky coat and dignified demeanor. Independent yet affectionate with family, they need long runs. Their smooth or feathered coat is easy-care and sheds minimally."
+Samoyed,"A fluffy Arctic spitz with a perpetually “smiling” expression and thick white coat. Friendly and hardworking, they thrive on activity and companionship. Their dense coat sheds heavily and needs daily brushing."
+Schipperke,"A small, black Belgian watchdog with a fox-like face and thick coat. Energetic and curious, they excel in agility and companionship. Their dense double coat requires weekly brushing to control shedding."
+Scottish Deerhound,"A large, dignified sighthound with a wiry coat and gentle nature. Calm and friendly, they form strong bonds with family. Their rough coat needs occasional brushing and stripping."
+Scottish Terrier,"A sturdy, dignified terrier with a wiry coat and distinctive profile. Independent and confident, they make loyal companions. Their coat requires hand-stripping or clipping twice yearly."
+Sealyham Terrier,"A small, white terrier with a broad head and wiry coat, bred for hunting small game. Affectionate and robust, they suit families and rural life. Their coat needs regular stripping or clipping."
+Shetland Sheepdog,"A small herding dog with a lush double coat and intelligent expression. Loyal and trainable, they excel in obedience and agility. Their coat requires frequent brushing to manage shedding."
+Shiba Inu,"A small, agile spitz from Japan with a fox-like face and spirited personality. Independent yet affectionate with family, they are clean and alert. Their dense coat sheds heavily twice yearly and needs brushing."
+Shih Tzu,"A small toy breed with a long, flowing coat and friendly disposition. Affectionate and outgoing, they love lap time. Their luxurious coat requires daily brushing or regular trims."
+Siberian Husky,"A medium-sized sled dog with striking eyes and thick double coat, bred for endurance. Friendly and energetic, they thrive in packs and cold climates. Their coat sheds heavily twice a year and needs frequent brushing."
+Silky Terrier,"A small Australian terrier with a sleek, silky coat and lively nature. Curious and affectionate, they excel in obedience and agility. Their fine coat needs regular brushing and trimming."
+Smooth Fox Terrier,"A small, energetic terrier with a smooth coat and sharp expression. Fearless and intelligent, they enjoy hunting and play. Their short coat is easy-care and sheds minimally."
+Soft Coated Wheaten Terrier,"A medium-sized Irish terrier with a soft, silky wheaten coat and friendly temperament. Playful and affectionate, they make good family dogs. Their coat needs regular grooming to prevent mats."
+Spinone Italiano,"A large, coarse-coated Italian gundog with a gentle expression. Affectionate and versatile, they excel in water and land retrieving. Their rough coat requires regular stripping or clipping."
+Staffordshire Bull Terrier,"A muscular, agile terrier with a friendly, affectionate nature despite a tough appearance. Confident and people-oriented, they thrive on companionship. Their short coat is easy to maintain."
+Standard Schnauzer,"A medium-sized, robust terrier with a wiry coat and distinctive beard. Alert and trainable, they excel in guarding and companionship. Their coat needs regular clipping and brushing."
+Sussex Spaniel,"A low-slung, golden-coated spaniel with a merry temperament, bred for flushing game. Calm and affectionate, they suit relaxed households. Their water-resistant coat requires regular brushing."
+Tibetan Mastiff,"A large, protective guardian with a dense double coat and noble bearing. Independent and territorial, they need early socialization. Their thick coat requires frequent brushing, especially in summer."
+Tibetan Terrier,"A medium-sized, shaggy-coated companion from Tibet, considered lucky. Gentle and friendly, they bond closely with family. Their long coat needs daily brushing or regular trims."
+Toy Fox Terrier,"A tiny, agile toy breed with a smooth coat and spirited personality. Intelligent and affectionate, they excel in obedience and agility. Their short coat is low-maintenance."
+Treeing Walker Coonhound,"A medium-large scent hound with a tri-color coat, bred for raccoon hunting. Energetic and friendly, they need plenty of exercise. Their short coat is easy to care for and sheds moderately."
+Vizsla,"A sleek, golden-coated Hungarian sporting dog with a high energy level and affectionate nature. Intelligent and trainable, they form strong bonds and excel in all activities. Their short coat is easy-care."
+Weimaraner,"A sleek, gray hunting dog with a noble bearing and high endurance. Energetic and intelligent, they thrive on vigorous exercise and companionship. Their short coat is easy to maintain."
+Welsh Springer Spaniel,"A medium-sized, red-and-white spaniel with a loving and reliable nature. Energetic and trainable, they excel in flushing and retrieving. Their medium coat needs regular brushing and trimming."
+Welsh Terrier,"A small, sturdy terrier with a wiry black-and-tan coat and spirited temperament. Independent but affectionate, they enjoy both work and play. Their coat requires hand-stripping or clipping twice yearly."
+West Highland White Terrier,"A small, white terrier with a harsh coat and lively personality. Confident and friendly, they adapt well to families. Their coat needs regular hand-stripping or clipping."
+Whippet,"A slender sighthound with speed and gentle disposition, known as the “poor man’s racehorse.” Affectionate and calm at home, they need short bursts of exercise. Their short coat is very low-maintenance."
+Wire Fox Terrier,"A small, energetic terrier with a dense, wiry coat and distinctive beard. Alert and fearless, they excel in earthdog trials. Their coat requires hand-stripping twice yearly."
+Wirehaired Pointing Griffon,"A medium-sized gundog with a rough, medium-length coat and affectionate nature. Versatile and intelligent, they excel in hunting and family life. Their coat needs regular stripping or clipping."
+Xoloitzcuintli,"An ancient Mexican hairless or coated breed with a sleek appearance and loyal temperament. Alert and calm, they form strong bonds with family. Hairless varieties need skin care; coated varieties require regular brushing."
+Yorkshire Terrier,"A small toy breed with a silky blue-and-tan coat and bold personality. Confident and affectionate, they enjoy lap time and play. Their long coat needs daily brushing or can be trimmed for easier care."
+
 

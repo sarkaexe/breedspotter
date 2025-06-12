@@ -3,7 +3,7 @@ torch==2.7.1
 torchvision==0.22.1
 transformers==4.32.0
 chromadb==0.4.3
-guardrails==2.0.0      # lub wersja, która działa
+codecov==2.1.13
 pillow
 pandas
 ftfy

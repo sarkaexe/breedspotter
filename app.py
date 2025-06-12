@@ -53,13 +53,12 @@ RESPONSE_SCHEMA = {
     "required": ["Rasa", "Opis", "Źródła"]
 }
 
-# 6) Inicjalizacja generatora HF (distilgpt2)
+# 6) Inicjalizacja generatora HF z GPT-Neo 125M
 @st.cache_resource
 def get_generator() -> TextGenerationPipeline:
     return pipeline(
         "text-generation",
-        model="distilgpt2",
-        max_new_tokens=100,
+        model="EleutherAI/gpt-neo-125M",
         do_sample=False
     )
 
@@ -75,28 +74,31 @@ def classify_image(img: Image.Image):
     idx = sims.argmax().item()
     return BREEDS[idx]
 
-# 8) Retrieval + generowanie opisu
+# 8) Retrieval + generowanie opisu z GPT-Neo-125M
 def retrieve_and_generate(breed: str):
-    # Pobierz i przefiltruj snippet’y
+    # Pobierz top-3 snippetów (filtrując nan/puste)
     raw_docs = profile_map.get(breed, [])
-    docs = [d for d in raw_docs if isinstance(d, str) and d.strip()]
+    docs = [d for d in raw_docs if isinstance(d, str) and d.strip()][:3]
     if not docs:
         docs = [f"No profile snippets available for {breed}."]
-    docs = docs[:3]
 
-    # Pobierz źródła
+    # Pobierz i przefiltruj źródła
     raw_srcs = source_map.get(breed, [])
     sources = [s for s in raw_srcs if isinstance(s, str) and s.strip()][:3]
 
-    # Buduj prompt
+    # Zbuduj prompt
     snippets = "\n".join(f"- {d}" for d in docs)
     prompt = (
         f"Breed: {breed}\n"
-        "Provide a detailed, 3-sentence description of the temperament and needs of this breed based on the following snippets:\n"
+        "Provide a detailed, 3-sentence description of the temperament and needs of this dog breed based on the following information:\n"
         f"{snippets}\n"
     )
 
-    out = generator(prompt)
+    # Generuj
+    out = generator(
+        prompt,
+        max_length=len(prompt.split()) + 80
+    )
     text = out[0].get("generated_text") or out[0].get("text", "")
 
     # Weź pierwsze 3 zdania

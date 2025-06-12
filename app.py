@@ -80,7 +80,7 @@ def classify_image(img: Image.Image):
     idx = sims.argmax().item()
     return BREEDS[idx]
 
-# 8) Retrieval + generowanie opisu (3 zdania) z 1 snippetem, fokus na temperament
+# 8) Retrieval + generowanie opisu w formie 5 przymiotników
 def retrieve_and_generate(breed: str):
     # Pobierz top-1 snippet
     raw_docs = profile_map.get(breed, [])
@@ -90,40 +90,29 @@ def retrieve_and_generate(breed: str):
             snippet = d
             break
 
-    # Buduj prompt: tylko temperament, bez badań czy potrzeb
+    # Prompt proszący o 5 przymiotników
     prompt = (
         f"Breed: {breed}\n"
         "Here is one key fact about this breed:\n"
         f"- {snippet}\n\n"
-        "Write a 3-sentence description of this breed’s TEMPERAMENT only. "
-        "Focus solely on personality traits and behavior, in a positive tone. "
-        "Do not mention needs, history, studies, or repeat phrases.\n"
+        "Provide exactly 5 adjectives (in English) that best describe this breed’s temperament, "
+        "separated by commas. Do not write anything else.\n"
     )
 
-    # Generuj tekst
-    out = generator(prompt, max_new_tokens=100)
+    # Generuj
+    out = generator(prompt, max_new_tokens=50)
     text = out[0].get("generated_text") or out[0].get("text", "")
 
     # Usuń echo prompta, jeśli wystąpiło
     if text.startswith(prompt):
         text = text[len(prompt):].lstrip()
 
-    # Podziel na zdania i oczyść
-    raw_sents = [s.strip() for s in text.split('.') if s.strip()]
+    # Wyciągnij linię z przymiotnikami
+    adjectives = text.splitlines()[0].strip()
+    parts = [a.strip().rstrip('.') for a in adjectives.split(',') if a.strip()]
+    top5 = parts[:5]
 
-    # Usuń konsekutywne duplikaty
-    sentences, prev = [], None
-    for s in raw_sents:
-        if s != prev:
-            sentences.append(s)
-        prev = s
-
-    # Weź pierwsze 3 unikalne zdania
-    paragraph = ". ".join(sentences[:3])
-    if paragraph and not paragraph.endswith('.'):
-        paragraph += '.'
-
-    result = {"Rasa": breed, "Opis": paragraph}
+    result = {"Rasa": breed, "Opis": ", ".join(top5)}
     jsonschema.validate(instance=result, schema=RESPONSE_SCHEMA)
     return result
 

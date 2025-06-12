@@ -91,15 +91,15 @@ def retrieve_and_generate(breed: str):
     sources = source_map.get(breed, [])[:2]
     # Filter out non-string or NaN sources
     sources = [str(s) for s in sources if isinstance(s, str) and s.strip()]
-    # Build prompt
+    # Build snippets from docs
     snippets = "
 ".join(f"- {d}" for d in docs)
+    # Single f-string prompt to avoid syntax issues
     prompt = (
         f"Breed: {breed}.
 "
-        "Describe the temperament and needs of this breed based on the following snippets:
-"
-        f"{snippets}"
+        f"Describe the temperament and needs of this breed based on the following snippets:
+{snippets}"
     )
     # Generate text with HF pipeline
     out = generator(prompt, max_length=len(prompt.split()) + 60, do_sample=False)
@@ -129,4 +129,3 @@ if uploaded:
         st.markdown("#### Sources")
         for s in srcs:
             st.write(f"- {s}")
-

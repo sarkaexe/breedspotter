@@ -112,11 +112,20 @@ if uploaded:
         with st.spinner("Classifying breed..."):
             breed = classify_image(img)
         st.write(f"**Breed:** {breed}")
-        with st.spinner("Generating description..."):
-            result, srcs = retrieve_and_generate(breed)
-        st.markdown("### Description")
-        st.write(result.get("Opis"))
-        st.markdown("#### Sources")
-        for s in srcs:
-            st.write(f"- {s}")
+        # Generate description with error handling
+        try:
+            with st.spinner("Generating description..."):
+                result, srcs = retrieve_and_generate(breed)
+        except openai.error.AuthenticationError:
+            st.error("OpenAI API key is not configured or invalid. Please set it in Streamlit Secrets.")
+        except openai.error.RateLimitError:
+            st.error("API rate limit exceeded. Please check your OpenAI quota.")
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
+        else:
+            st.markdown("### Description")
+            st.write(result.get("Opis"))
+            st.markdown("#### Sources")
+            for s in srcs:
+                st.write(f"- {s}")
 

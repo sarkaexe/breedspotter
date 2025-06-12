@@ -46,9 +46,9 @@ breed_embeddings = embed_breeds(BREEDS)
 RESPONSE_SCHEMA = {
     "type": "object",
     "properties": {
-        "Rasa":    {"type": "string"},
-        "Opis":    {"type": "string"},
-        "Źródła":  {"type": "array", "items": {"type": "string"}}
+        "Rasa":   {"type": "string"},
+        "Opis":   {"type": "string"},
+        "Źródła": {"type": "array", "items": {"type": "string"}}
     },
     "required": ["Rasa", "Opis", "Źródła"]
 }
@@ -57,7 +57,6 @@ RESPONSE_SCHEMA = {
 @st.cache_resource
 def get_generator() -> TextGenerationPipeline:
     try:
-        # Llama-2 chat model
         return pipeline(
             "text-generation",
             model="meta-llama/Llama-2-7b-chat-hf",
@@ -65,8 +64,12 @@ def get_generator() -> TextGenerationPipeline:
             do_sample=False
         )
     except Exception:
-        # Fallback to distilgpt2
-        return pipeline("text-generation", model="distilgpt2", max_new_tokens=100, do_sample=False)
+        return pipeline(
+            "text-generation",
+            model="distilgpt2",
+            max_new_tokens=100,
+            do_sample=False
+        )
 
 generator: Pipeline = get_generator()
 
@@ -82,33 +85,32 @@ def classify_image(img: Image.Image):
 
 # --- 6. Retrieval + generation with HF model ---
 def retrieve_and_generate(breed: str):
-    # Pobieramy 2 snippet’y
-    docs = profile_map.get(breed, [])[:2]
-    sources = source_map.get(breed, [])[:2]
+    # Pobieramy top-3 snippetów i filtry źródeł
+    docs = profile_map.get(breed, [])[:3]
+    sources = source_map.get(breed, [])[:3]
     sources = [s for s in sources if isinstance(s, str) and s.strip()]
 
     snippets = "\n".join(f"- {d}" for d in docs)
     prompt = f"""Breed: {breed}
-Describe the temperament and needs of this breed based on the following snippets:
+Provide a detailed, 3-sentence description of the temperament and needs of this breed based on the following snippets:
 {snippets}
-Provide a concise answer as plain text."""
-    
-    # Generujemy
-    out = generator(prompt)
-    text = out[0].get("generated_text") or out[0].get("text", "")
-    
-    # Wyciągamy TYLKO pierwsze zdanie:
-    first_sentence = text.strip().split(".", 1)[0].strip()
-    if not first_sentence.endswith("."):
-        first_sentence += "."
+"""
 
-    # Budujemy wynik JSON
+    out = generator(prompt)
+    # HF pipeline może zwracać klucz "generated_text" lub "text"
+    text = out[0].get("generated_text") or out[0].get("text", "")
+
+    # Bierzemy pierwsze 3 zdania
+    sentences = [s.strip() for s in text.strip().split('.') if s.strip()]
+    first_three = '. '.join(sentences[:3])
+    if first_three and not first_three.endswith('.'):
+        first_three += '.'
+
     result = {
-        "Rasa": breed,
-        "Opis": first_sentence,
+        "Rasa":   breed,
+        "Opis":   first_three,
         "Źródła": sources
     }
-    # Walidacja struktury
     jsonschema.validate(instance=result, schema=RESPONSE_SCHEMA)
     return result, sources
 
@@ -119,13 +121,17 @@ uploaded = st.file_uploader("Upload dog's photo", type=["jpg","jpeg","png"])
 if uploaded:
     img = Image.open(uploaded).convert("RGB")
     st.image(img, caption="Your photo", use_container_width=True)
+
     with st.spinner("Recognizing breed..."):
         breed = classify_image(img)
     st.write(f"**Breed:** {breed}")
+
     with st.spinner("Generating description..."):
         result, srcs = retrieve_and_generate(breed)
+
     st.markdown("### Description")
     st.write(result["Opis"])
+
     st.markdown("#### Sources")
     for s in srcs:
         st.write(f"- {s}")

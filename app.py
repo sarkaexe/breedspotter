@@ -96,4 +96,4 @@ if uploaded:
     st.image(img, caption="Your photo", use_container_width=True)
     with st.spinner("Dog breed recognition..."):
         breed, conf = classify_image(img)
-    st.write(f"**Rasa:** {breed}")
+    st.write(f"**Breed:** {breed}")

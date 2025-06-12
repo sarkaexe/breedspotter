@@ -1,14 +1,10 @@
 import os
-# Wyłącz warningi Transformers
-os.environ["TRANSFORMERS_VERBOSITY"] = "error"
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
+import random
 import streamlit as st
 from PIL import Image
 import pandas as pd
 import torch
 import clip
-import json
 import jsonschema
 from transformers import pipeline
 from transformers.pipelines import TextGenerationPipeline
@@ -25,6 +21,7 @@ def load_metadata():
     return df, profile_map
 
 df, profile_map = load_metadata()
+BREEDS = sorted(df.breed.unique())
 
 # 3) Ładowanie CLIP
 @st.cache_resource
@@ -34,17 +31,20 @@ def load_clip(device):
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 clip_model, clip_preprocess = load_clip(device)
-BREEDS = sorted(df.breed.unique())
 
-# 4) Precompute text embeddings
+# 4) Precompute text embeddings dla ras + ogólnych klas
 @st.cache_resource
-def embed_breeds(breeds):
+def embed_texts(texts):
+    tokens = clip.tokenize(texts).to(device)
     with torch.no_grad():
-        tokens = clip.tokenize(breeds).to(device)
         emb = clip_model.encode_text(tokens)
-        return emb / emb.norm(dim=-1, keepdim=True)
+    return emb / emb.norm(dim=-1, keepdim=True)
 
-breed_embeddings = embed_breeds(BREEDS)
+# embeddings ras
+breed_embeddings = embed_texts(BREEDS)
+# embeddings klas ogólnych
+GENERAL_LABELS = ["dog","cat","car","flower","chair","person","bird"]
+general_embeddings = embed_texts([f"a photo of a {lbl}" for lbl in GENERAL_LABELS])
 
 # 5) Schemat JSON dla walidacji
 RESPONSE_SCHEMA = {
@@ -62,14 +62,29 @@ def get_generator() -> TextGenerationPipeline:
     return pipeline(
         "text-generation",
         model="EleutherAI/gpt-neo-125M",
-        do_sample=False,
+        do_sample=True,
+        temperature=0.6,
+        top_k=30,
+        top_p=0.85,
         truncation=True
     )
 
 generator = get_generator()
 
-# 7) Funkcja klasyfikująca rasę
-def classify_image(img: Image.Image):
+# 7) Funkcja sprawdzająca czy to pies
+def detect_dog(img: Image.Image, threshold: float = 0.3) -> bool:
+    img_input = clip_preprocess(img).unsqueeze(0).to(device)
+    with torch.no_grad():
+        img_emb = clip_model.encode_image(img_input)
+        img_emb = img_emb / img_emb.norm(dim=-1, keepdim=True)
+        sims = (img_emb @ general_embeddings.T).squeeze(0)
+    # highest similarity label
+    best_idx = sims.argmax().item()
+    best_label = GENERAL_LABELS[best_idx]
+    return best_label == "dog"
+
+# 8) Funkcja klasyfikująca rasę (zakładamy, że to pies)
+def classify_breed(img: Image.Image) -> str:
     img_input = clip_preprocess(img).unsqueeze(0).to(device)
     with torch.no_grad():
         img_emb = clip_model.encode_image(img_input)
@@ -78,61 +93,58 @@ def classify_image(img: Image.Image):
     idx = sims.argmax().item()
     return BREEDS[idx]
 
-# 8) Retrieval + generowanie opisu
+# 9) Retrieval + generowanie 5 unikalnych przymiotników
 def retrieve_and_generate(breed: str):
-    # Pobierz top-3 snippetów
-    docs_list = profile_map.get(breed, [])
-    docs = [d for d in docs_list if isinstance(d, str) and d.strip()][:3]
-
-    # Zbuduj prompt
-    if docs:
-        snippets = "\n".join(f"- {d}" for d in docs)
-        prompt = (
-            f"Breed: {breed}\n"
-            "Provide a detailed, 3-sentence description of the temperament "
-            "and needs of this dog breed based on the following snippets:\n"
-            f"{snippets}\n"
-        )
-    else:
-        prompt = (
-            f"Breed: {breed}\n"
-            "Provide a detailed, 3-sentence description of the temperament "
-            "and needs of this dog breed based on your general canine knowledge.\n"
-        )
-
-    # Generuj
-    out = generator(prompt, max_new_tokens=80)
+    raw_docs = profile_map.get(breed, [])
+    valid = [
+        d.strip() for d in raw_docs
+        if isinstance(d, str) and d.strip()
+    ]
+    snippet = random.choice(valid) if valid else ""
+    prompt = (
+        f"Breed: {breed}\n"
+        "Here is one key fact about this breed:\n"
+        f"- {snippet}\n\n"
+        "Provide exactly 5 unique adjectives (in English) that best describe this breed’s temperament, "
+        "separated by commas. Each adjective must be different; do not echo the fact or repeat adjectives.\n"
+    )
+    out = generator(prompt, max_new_tokens=50)
     text = out[0].get("generated_text") or out[0].get("text", "")
-
-    # Usuń echo prompta, jeśli wystąpiło
     if text.startswith(prompt):
         text = text[len(prompt):].lstrip()
-
-    # Weź pierwsze 3 zdania
-    sentences = [s.strip() for s in text.split('.') if s.strip()]
-    first_three = '. '.join(sentences[:3])
-    if first_three and not first_three.endswith('.'):
-        first_three += '.'
-
-    result = {"Rasa": breed, "Opis": first_three}
+    line = text.splitlines()[0]
+    parts = [a.strip().rstrip('.') for a in line.split(',') if a.strip()]
+    unique = []
+    for a in parts:
+        if a.lower() not in [u.lower() for u in unique]:
+            unique.append(a)
+        if len(unique) == 5:
+            break
+    result = {"Rasa": breed, "Opis": ", ".join(unique)}
     jsonschema.validate(instance=result, schema=RESPONSE_SCHEMA)
     return result
 
-# 9) UI Streamlit
+# 10) UI Streamlit
 st.title("🐶 BreedSpotter — Dog breed recognition")
 
-uploaded = st.file_uploader("Upload dog's photo", type=["jpg", "jpeg", "png"])
+uploaded = st.file_uploader("Upload image", type=["jpg","jpeg","png"])
 if uploaded:
     img = Image.open(uploaded).convert("RGB")
     st.image(img, caption="Your photo", use_container_width=True)
 
-    with st.spinner("Recognizing breed..."):
-        breed = classify_image(img)
-    st.write(f"**Breed:** {breed}")
+    # najpierw detekcja: pies czy nie?
+    with st.spinner("Checking if this is a dog..."):
+        is_dog = detect_dog(img)
+    if not is_dog:
+        st.error("This image does not appear to contain a dog 🐶. Please upload a photo of a dog.")
+    else:
+        # klasyfikacja rasy
+        with st.spinner("Recognizing breed..."):
+            breed = classify_breed(img)
+        st.write(f"**Breed:** {breed}")
 
-    with st.spinner("Generating description..."):
-        result = retrieve_and_generate(breed)
-
-    st.markdown("### Description")
-    st.write(result["Opis"])
-
+        # generowanie przymiotników
+        with st.spinner("Generating temperament adjectives..."):
+            result = retrieve_and_generate(breed)
+        st.markdown("### Description")
+        st.write(result["Opis"])

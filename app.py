@@ -62,9 +62,9 @@ def get_generator() -> TextGenerationPipeline:
         "text-generation",
         model="EleutherAI/gpt-neo-125M",
         do_sample=True,
-        temperature=0.7,
-        top_k=50,
-        top_p=0.9,
+        temperature=0.6,
+        top_k=30,
+        top_p=0.85,
         truncation=True
     )
 
@@ -90,12 +90,14 @@ def retrieve_and_generate(breed: str):
             snippet = d
             break
 
-    # Buduj prompt na podstawie jednego snippet’a
+    # Buduj prompt z jasnymi instrukcjami
     prompt = (
         f"Breed: {breed}\n"
-        "Based on the following fact, write a clear 3-sentence paragraph "
-        "describing the temperament and needs of this dog breed:\n"
-        f"- {snippet}\n"
+        "Here is one key fact about this breed:\n"
+        f"- {snippet}\n\n"
+        "Now write a 3-sentence paragraph describing the temperament and needs of this dog breed. "
+        "Use a friendly, positive tone; write three distinct sentences with no repeated phrases. "
+        "Do not echo the fact verbatim.\n"
     )
 
     # Generuj tekst
@@ -109,7 +111,7 @@ def retrieve_and_generate(breed: str):
     # Podziel na zdania i oczyść
     raw_sents = [s.strip() for s in text.split('.') if s.strip()]
 
-    # Usuń konsekutywne duplikaty
+    # Usuń konsekwentne duplikaty
     sentences, prev = [], None
     for s in raw_sents:
         if s != prev:

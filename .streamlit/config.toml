@@ -1,5 +1,5 @@
+config
 [server]
-useContainerWidth = true
-
-[watcher]
-fileWatcherType = "none"
+pip_extra_args = [
+  "--extra-index-url", "https://download.pytorch.org/whl/cpu"
+]

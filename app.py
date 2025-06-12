@@ -1,25 +1,26 @@
+```python
 import streamlit as st
 from PIL import Image
 import pandas as pd
 import torch
 import torch.nn.functional as F
-import clip                                 # from openai/CLIP
+import clip  # openai/CLIP
 import chromadb
 from chromadb.config import Settings
 import openai
 import json
 import jsonschema
 
-# 1) Metadata
+# --- 1. Load metadata ---
 @st.cache_resource
 def load_metadata():
-    df = pd.read_csv("stanford_dogs_metadata.csv")
-    prof = pd.read_csv("breeds_profiles.csv")
+    df = pd.read_csv("stanford_dogs_metadata.csv")  # filepath, breed
+    prof = pd.read_csv("breeds_profiles.csv")       # breed, text, source
     return df, prof
 
 df, prof = load_metadata()
 
-# 2) ChromaDB
+# --- 2. Initialize ChromaDB ---
 @st.cache_resource
 def init_chroma(prof_df):
     client = chromadb.Client(Settings(
@@ -38,7 +39,7 @@ def init_chroma(prof_df):
 
 chroma = init_chroma(prof)
 
-# 3) Load CLIP
+# --- 3. Load CLIP (OpenAI) ---
 @st.cache_resource
 def load_clip_model(device):
     model, preprocess = clip.load("ViT-B/32", device=device, jit=False)
@@ -58,22 +59,22 @@ def embed_breeds(breeds):
 
 breed_embeddings = embed_breeds(BREEDS)
 
-# 4) Response schema
+# --- 4. JSON schema for response validation ---
 RESPONSE_SCHEMA = {
     "type": "object",
     "properties": {
-        "Rasa": {"type": "string"},
+        "Rasa":    {"type": "string"},
         "Pewność": {"type": "string", "pattern": "^\\d{1,3}%$"},
-        "Opis": {"type": "string"},
-        "Źródła": {"type": "array", "items": {"type": "string"}}
+        "Opis":    {"type": "string"},
+        "Źródła":  {"type": "array", "items": {"type": "string"}}
     },
     "required": ["Rasa", "Pewność", "Opis", "Źródła"]
 }
 
-# OpenAI key
+# Set OpenAI API key
 openai.api_key = st.secrets.get("openai_api_key")
 
-# 5) Classification
+# --- 5. Classification function ---
 def classify_image(img: Image.Image):
     img_input = clip_preprocess(img).unsqueeze(0).to(device)
     with torch.no_grad():
@@ -83,7 +84,7 @@ def classify_image(img: Image.Image):
     score, idx = sims.max().item(), sims.argmax().item()
     return BREEDS[idx], score * 100
 
-# 6) Retrieval + generation
+# --- 6. Retrieval + generation using OpenAI---
 def retrieve_and_generate(breed, conf):
     if conf < 50:
         return None, False, []
@@ -94,8 +95,8 @@ def retrieve_and_generate(breed, conf):
     sources = [md["source"] for md in res["metadatas"][0]]
     prompt = (
         f"Zidentyfikowano rasę: {breed} ({conf:.1f}%).\n"
-        "Na podstawie poniższych fragmentów opisz temperament i potrzeby tej rasy"
-        " w formie JSON z polami Rasa, Pewność, Opis, Źródła:\n" +
+        "Na podstawie poniższych fragmentów opisz temperament i potrzeby tej rasy "
+        "w formie JSON z polami Rasa, Pewność, Opis, Źródła:\n" +
         "\n".join(docs)
     )
     resp = openai.ChatCompletion.create(
@@ -111,7 +112,7 @@ def retrieve_and_generate(breed, conf):
     except Exception:
         return text, False, sources
 
-# 7) Streamlit UI
+# --- 7. Streamlit UI ---
 st.set_page_config(page_title="🐶 BreedSpotter", layout="centered")
 st.title("🐶 BreedSpotter — Rozpoznawanie ras psów")
 
@@ -136,4 +137,4 @@ if uploaded:
             st.markdown("#### Źródła")
             for s in srcs:
                 st.write(f"- {s}")
-
+```

@@ -37,7 +37,7 @@ def load_clip(device):
 device = "cuda" if torch.cuda.is_available() else "cpu"
 clip_model, clip_preprocess = load_clip(device)
 
-# 4) Precompute embeddingów dla ras i klas ogólnych
+# 4) Precompute embeddingów dla ras i ogólnych klas
 @st.cache_resource
 def embed_texts(texts):
     tokens = clip.tokenize(texts).to(device)
@@ -64,7 +64,7 @@ RESPONSE_SCHEMA = {
 def get_generator() -> TextGenerationPipeline:
     return pipeline(
         "text-generation",
-        model="mistralai/mistral-7b-instruct:free",
+        model="mistralai/mistral-7b-instruct",
         trust_remote_code=True,
         device_map="auto",
         do_sample=True,
@@ -158,4 +158,3 @@ if uploaded:
                 result = retrieve_and_generate(breed)
             st.markdown("### Description")
             st.write(result["Opis"])
-

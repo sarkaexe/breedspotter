@@ -11,24 +11,27 @@ import pandas as pd
 import torch
 import clip
 import jsonschema
-from transformers import pipeline
+import openrouter
 from transformers.pipelines import TextGenerationPipeline
 
-# 1) Konfiguracja strony
+# --- 1) OpenRouter API client ---
+router = openrouter.OpenRouter(api_key=st.secrets["openrouter_api_key"])
+
+# --- 2) Streamlit page config ---
 st.set_page_config(page_title="🐶 BreedSpotter", layout="centered")
 
-# 2) Wczytywanie metadanych
+# --- 3) Load metadata ---
 @st.cache_data
 def load_metadata():
     df = pd.read_csv("stanford_dogs_metadata.csv")
-    prof = pd.read_csv("breeds_profiles.csv")  # kolumny: breed,text,source
+    prof = pd.read_csv("breeds_profiles.csv")  # columns: breed,text,source
     profile_map = prof.groupby("breed")["text"].apply(list).to_dict()
     return df, profile_map
 
 df, profile_map = load_metadata()
 BREEDS = sorted(df.breed.unique())
 
-# 3) Ładowanie CLIP
+# --- 4) Load CLIP ---
 @st.cache_resource
 def load_clip(device):
     model, preprocess = clip.load("ViT-B/32", device=device, jit=False)
@@ -37,7 +40,7 @@ def load_clip(device):
 device = "cuda" if torch.cuda.is_available() else "cpu"
 clip_model, clip_preprocess = load_clip(device)
 
-# 4) Precompute embeddingów dla ras i ogólnych klas
+# --- 5) Precompute embeddings ---
 @st.cache_resource
 def embed_texts(texts):
     tokens = clip.tokenize(texts).to(device)
@@ -49,7 +52,7 @@ breed_embeddings = embed_texts(BREEDS)
 GENERAL_LABELS = ["dog", "cat", "car", "flower", "chair", "person", "bird"]
 general_embeddings = embed_texts([f"a photo of a {lbl}" for lbl in GENERAL_LABELS])
 
-# 5) Schemat JSON dla walidacji
+# --- 6) JSON schema for validation ---
 RESPONSE_SCHEMA = {
     "type": "object",
     "properties": {
@@ -59,67 +62,59 @@ RESPONSE_SCHEMA = {
     "required": ["Rasa", "Opis"]
 }
 
-# 6) Inicjalizacja Mistral 7B Instruct
-@st.cache_resource
-def get_generator() -> TextGenerationPipeline:
-    return pipeline(
-        "text-generation",
-        model="mistralai/mistral-7b-instruct",
-        trust_remote_code=True,
-        device_map="auto",
-        do_sample=True,
-        temperature=0.7,
-        top_p=0.9,
-        max_new_tokens=120
-    )
-
-generator = get_generator()
-
-# 7) Detekcja, czy obraz przedstawia psa
+# --- 7) Detect if image is a dog ---
 def detect_dog(img: Image.Image) -> bool:
     x = clip_preprocess(img).unsqueeze(0).to(device)
     with torch.no_grad():
         emb = clip_model.encode_image(x)
         emb = emb / emb.norm(dim=-1, keepdim=True)
         sims = (emb @ general_embeddings.T).squeeze(0)
-    best = sims.argmax().item()
-    return GENERAL_LABELS[best] == "dog"
+    return GENERAL_LABELS[sims.argmax().item()] == "dog"
 
-# 8) Klasyfikacja rasy
+# --- 8) Classify breed ---
 def classify_breed(img: Image.Image) -> str:
     x = clip_preprocess(img).unsqueeze(0).to(device)
     with torch.no_grad():
         emb = clip_model.encode_image(x)
         emb = emb / emb.norm(dim=-1, keepdim=True)
         sims = (emb @ breed_embeddings.T).squeeze(0)
-    idx = sims.argmax().item()
-    return BREEDS[idx]
+    return BREEDS[sims.argmax().item()]
 
-# 9) RAG + Mistral: 3 snippet’y → 4 unikalne zdania o temperamencie
+# --- 9) Retrieve & generate via OpenRouter RAG ---
 def retrieve_and_generate(breed: str):
-    # Pobierz do 3 snippetów
+    # fetch up to 3 snippets
     docs = [d for d in profile_map.get(breed, []) if isinstance(d, str) and d.strip()][:3]
     while len(docs) < 3:
         docs.append("No further detail available.")
 
-    snippets_block = "\n".join(f"- {d}" for d in docs)
-    prompt = (
-        f"You are an expert on dog breeds.\n"
-        f"Breed: {breed}\n"
-        "Here are three facts about this breed:\n"
-        f"{snippets_block}\n\n"
-        "Write a coherent 4-sentence paragraph describing this breed’s TEMPERAMENT only. "
-        "Each sentence must be unique, must not echo the facts verbatim, and flow naturally.\n"
+    snippets = "\n".join(f"- {d}" for d in docs)
+    system_msg = {
+        "role": "system",
+        "content": (
+            "You are an assistant that writes concise, non-repetitive "
+            "4-sentence paragraphs about dog temperament based on provided facts."
+        )
+    }
+    user_msg = {
+        "role": "user",
+        "content": (
+            f"Breed: {breed}\n"
+            "Here are three facts about this breed:\n"
+            f"{snippets}\n\n"
+            "Write a 4-sentence paragraph describing this breed’s TEMPERAMENT only. "
+            "Each sentence must be unique, not echo the facts verbatim, and flow naturally."
+        )
+    }
+
+    resp = router.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[system_msg, user_msg],
+        temperature=0.7,
+        max_tokens=200,
     )
+    text = resp.choices[0].message.content
 
-    out = generator(prompt)
-    text = out[0]["generated_text"]
-
-    # Usuń echo prompta
-    if text.startswith(prompt):
-        text = text[len(prompt):].lstrip()
-
-    # Podziel na zdania i oczyść
+    # split into sentences & dedupe
     sents = [s.strip() for s in text.split('.') if s.strip()]
     unique = []
     prev = None
@@ -138,7 +133,7 @@ def retrieve_and_generate(breed: str):
     jsonschema.validate(instance=result, schema=RESPONSE_SCHEMA)
     return result
 
-# 10) UI Streamlit
+# --- 10) Streamlit UI ---
 st.title("🐶 BreedSpotter — Dog breed recognition")
 
 uploaded = st.file_uploader("Upload image", type=["jpg", "jpeg", "png"])

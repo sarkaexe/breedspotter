@@ -37,7 +37,7 @@ def load_clip(device):
 device = "cuda" if torch.cuda.is_available() else "cpu"
 clip_model, clip_preprocess = load_clip(device)
 
-# 4) Precompute text embeddings dla ras i klas ogólnych
+# 4) Precompute embeddingów dla ras i klas ogólnych
 @st.cache_resource
 def embed_texts(texts):
     tokens = clip.tokenize(texts).to(device)
@@ -59,17 +59,18 @@ RESPONSE_SCHEMA = {
     "required": ["Rasa", "Opis"]
 }
 
-# 6) Inicjalizacja generatora HF z GPT-Neo 125M (sampling enabled)
+# 6) Inicjalizacja Mistral 7B Instruct
 @st.cache_resource
 def get_generator() -> TextGenerationPipeline:
     return pipeline(
         "text-generation",
-        model="EleutherAI/gpt-neo-125M",
+        model="mistralai/mistral-7b-instruct:free",
+        trust_remote_code=True,
+        device_map="auto",
         do_sample=True,
-        temperature=0.6,
-        top_k=30,
-        top_p=0.85,
-        truncation=True
+        temperature=0.7,
+        top_p=0.9,
+        max_new_tokens=120
     )
 
 generator = get_generator()
@@ -94,36 +95,32 @@ def classify_breed(img: Image.Image) -> str:
     idx = sims.argmax().item()
     return BREEDS[idx]
 
-# 9) RAG-based generation: 3 snippet’y → 4 unikalne zdania o temperamencie
+# 9) RAG + Mistral: 3 snippet’y → 4 unikalne zdania o temperamencie
 def retrieve_and_generate(breed: str):
-    # Pobierz dokładnie 3 snippet’y
+    # Pobierz do 3 snippetów
     docs = [d for d in profile_map.get(breed, []) if isinstance(d, str) and d.strip()][:3]
     while len(docs) < 3:
         docs.append("No further detail available.")
 
-    # Zbuduj prompt
     snippets_block = "\n".join(f"- {d}" for d in docs)
     prompt = (
+        f"You are an expert on dog breeds.\n"
         f"Breed: {breed}\n"
-        "Below are three key facts about this dog breed:\n"
+        "Here are three facts about this breed:\n"
         f"{snippets_block}\n\n"
-        "Using these facts, write a coherent 4-sentence paragraph describing the breed’s TEMPERAMENT only. "
-        "Each sentence must be unique (no repeated phrases), must not echo the facts verbatim, "
-        "and should flow naturally as a single paragraph.\n"
+        "Write a coherent 4-sentence paragraph describing this breed’s TEMPERAMENT only. "
+        "Each sentence must be unique, must not echo the facts verbatim, and flow naturally.\n"
     )
 
-    # Generuj
-    out = generator(prompt, max_new_tokens=120)
-    text = out[0].get("generated_text") or out[0].get("text", "")
+    out = generator(prompt)
+    text = out[0]["generated_text"]
 
-    # Usuń echo prompta, jeśli wystąpiło
+    # Usuń echo prompta
     if text.startswith(prompt):
         text = text[len(prompt):].lstrip()
 
     # Podziel na zdania i oczyść
     sents = [s.strip() for s in text.split('.') if s.strip()]
-
-    # Usuń powtórzenia kolejnych zdań
     unique = []
     prev = None
     for s in sents:
@@ -151,7 +148,7 @@ if uploaded:
 
     with st.spinner("Checking content..."):
         if not detect_dog(img):
-            st.error("This image does not appear to contain a dog 🐶. Please upload a photo of a dog.")
+            st.error("This image does not appear to contain a dog. Please upload a photo of a dog.")
         else:
             with st.spinner("Recognizing breed..."):
                 breed = classify_breed(img)
@@ -159,6 +156,6 @@ if uploaded:
 
             with st.spinner("Generating temperament description..."):
                 result = retrieve_and_generate(breed)
-
             st.markdown("### Description")
             st.write(result["Opis"])
+

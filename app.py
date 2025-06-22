@@ -15,7 +15,7 @@ import openrouter
 from transformers.pipelines import TextGenerationPipeline
 
 # --- 1) OpenRouter API client ---
-router = openrouter.OpenRouter(api_key=st.secrets["openrouter_api_key"])
+router = openrouter.OpenRouter(api_key=st.secrets["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"])
 
 # --- 2) Streamlit page config ---
 st.set_page_config(page_title="🐶 BreedSpotter", layout="centered")

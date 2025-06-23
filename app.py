@@ -25,7 +25,7 @@ if "_init" not in st.session_state:
     st.session_state.profiles = load_breed_profiles()
     st.session_state.clf = load_classifier(st.session_state.breeds)
 
-uploaded = st.file_uploader("Wybierz zdjęcie", type=["jpg", "jpeg", "png"])
+uploaded = st.file_uploader("Choose a photo", type=["jpg", "jpeg", "png"])
 if uploaded:
     with st.spinner("Analyzing image…"):
         img = Image.open(io.BytesIO(uploaded.read())).convert("RGB")
@@ -42,7 +42,7 @@ if uploaded:
     profile = st.session_state.profiles.get(breed, "Brak opisu w bazie.")
     description = describe_breed(breed, profile)
 
-    st.markdown(f"### Opis rasy: {breed}")
+    st.markdown(f"### Breed: {breed}")
     st.write(description)
 
     # Zamiast st.toggle używamy checkbox

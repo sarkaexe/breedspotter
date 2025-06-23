@@ -1,62 +1,53 @@
-"""Zero‑shot (CLIP) or fine‑tuned dog‑breed classifier."""
-from __future__ import annotations
+# breedspotter/llm.pyAdd commentMore actions
 
-import pathlib
-from typing import List, Tuple, Dict
+import streamlit as st
+import openai
 
-import torch
-from PIL import Image
-from transformers import CLIPProcessor, CLIPModel
-
-_DEFAULT_MODEL = "openai/clip-vit-base-patch32"
-
-class ZeroShotDogClassifier:
-    """Uses CLIP logits to pick the best breed."""
-
-    def __init__(self, breeds: List[str], model_name: str = _DEFAULT_MODEL):
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model = CLIPModel.from_pretrained(model_name).to(self.device)
-        self.processor = CLIPProcessor.from_pretrained(model_name)
-        self.breeds = breeds
-
-    @torch.inference_mode()
-    def predict(self, image: Image.Image) -> Tuple[str, float, List[Tuple[str, float]]]:
-        prompts = [f"a photo of a {b}" for b in self.breeds]
-        inputs = self.processor(text=prompts, images=image, return_tensors="pt", padding=True).to(self.device)
-        logits = self.model(**inputs).logits_per_image  # shape [1, N]
-        probs = logits.softmax(dim=1).squeeze(0)
-        top_idx = int(probs.argmax())
-        ranked = list(zip(self.breeds, probs.tolist()))
-        return self.breeds[top_idx], float(probs[top_idx]), ranked
+_SYSTEM_PROMPT = (
+    "Jesteś entuzjastycznym ekspertem kynologicznym, odpowiadaj po polsku. "
+    "Gdy użytkownik przesyła zdjęcie psa i podajesz rasę, "
+    "odpowiedz dwoma–trzema zdaniami po polsku, zwięźle opisując cechy rasy."
+)
 
 
-class FineTunedDogClassifier:
-    """Loads a custom head trained via `train.py`.  Uses the same CLIP backbone."""
+def describe_breed(breed: str, profile: str) -> str:
+    """
+    Generate (or retrieve) a short Polish description for *breed*,
+    zawsze odczytując api_key i base_url z st.secrets["openai"].
+    """
+    # 1️⃣ Odczyt z .streamlit/secrets.toml
+    openai_secrets = st.secrets["openai"]
+    api_key  = openai_secrets["api_key"]
+    base_url = openai_secrets["base_url"]
 
-    def __init__(self, weight_path: str, breeds: List[str]):
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        checkpoint = torch.load(weight_path, map_location=self.device)
-        self.breeds = breeds
-        # Re‑create model + head
-        self.model = CLIPModel.from_pretrained(_DEFAULT_MODEL).to(self.device)
-        self.head = torch.nn.Linear(self.model.config.projection_dim, len(breeds)).to(self.device)
-        self.head.load_state_dict(checkpoint["head"])
-        self.model.eval(), self.head.eval()
+    # 2️⃣ Jeśli nie ma klucza – fallback na lokalny profile
+    if not api_key:
+        return profile
 
-    @torch.inference_mode()
-    def predict(self, image: Image.Image):
-        image_inputs = self.model.get_image_features(**self.model.get_image_features.tokenizer(image)).to(self.device)
-        feats = self.model.get_image_features(pixel_values=image_inputs).float()
-        logits = self.head(feats)
-        probs = logits.softmax(dim=-1)
-        top_idx = int(probs.argmax())
-        ranked = list(zip(self.breeds, probs.squeeze(0).tolist()))
-        return self.breeds[top_idx], float(probs[0, top_idx]), ranked
+    # 3️⃣ Konfiguracja klienta
+    openai.api_key = api_key
+    client = openai.OpenAI(base_url=base_url)
 
+    # 4️⃣ Przygotowanie wiadomości
+    messages = [
+        {"role": "system", "content": _SYSTEM_PROMPT},
+        {
+            "role": "user",
+            "content": (
+                f"Rasa: {breed}\n"
+                f"Informacje referencyjne: {profile}\n"
+                "Opis po polsku (2–3 zdania):"
+            ),
+        },
+    ]
 
-def load_classifier(breeds: List[str]) -> ZeroShotDogClassifier | FineTunedDogClassifier:
-    """Factory that prefers fine‑tuned weights if present."""
-    ckpt = pathlib.Path("weights/dog_classifier.pt")
-    if ckpt.exists():
-        return FineTunedDogClassifier(str(ckpt), breeds)
-    return ZeroShotDogClassifier(breeds)
+    # 5️⃣ Wywołanie API z obsługą błędów
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            temperature=0.6,
+        )
+        return response.choices[0].message.content.strip()
+    except Exception:
+        return profile

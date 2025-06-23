@@ -11,11 +11,11 @@ from breedspotter.classifier import load_classifier
 from breedspotter.data import load_metadata, load_breed_profiles
 from breedspotter.llm import describe_breed
 
-st.set_page_config(page_title="BreedSpotter 🐶", page_icon="🐾")
+st.set_page_config(page_title="BreedSpotter 🐶", page_icon="🐶")
 
-st.title("🐾 BreedSpotter")
+st.title("🐶 BreedSpotter")
 st.markdown(
-    "Prześlij zdjęcie psa, a powiem Ci, jaka to rasa — i opowiem o niej w kilku zdaniach."
+    "Upload a photo of a dog, and I’ll tell you what breed it is, and share a few sentences about it."
 )
 
 # Lazy init
@@ -27,14 +27,14 @@ if "_init" not in st.session_state:
 
 uploaded = st.file_uploader("Wybierz zdjęcie", type=["jpg", "jpeg", "png"])
 if uploaded:
-    with st.spinner("Analizuję obraz…"):
+    with st.spinner("Analyzing image…"):
         img = Image.open(io.BytesIO(uploaded.read())).convert("RGB")
         breed, prob, ranked = st.session_state.clf.predict(img)
 
     # Wyświetl obraz z opisem; zamiast use_container_width używamy width
     st.image(
         img,
-        caption=f"Najbardziej prawdopodobna rasa: **{breed}** ({prob*100:.1f}%)",
+        caption=f"Most likely breed: **{breed}** ({prob*100:.1f}%)",
         width=700,
     )
 
@@ -46,7 +46,7 @@ if uploaded:
     st.write(description)
 
     # Zamiast st.toggle używamy checkbox
-    show_top5 = st.checkbox("Pokaż 5 najlepszych typów", key="show_top5")
+    show_top5 = st.checkbox("Show the top 5 predictions", key="show_top5")
     if show_top5:
         for b, p in sorted(ranked, key=lambda t: t[1], reverse=True)[:5]:
             st.write(f"• {b}: {p*100:.1f}%")

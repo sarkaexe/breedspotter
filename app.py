@@ -1,4 +1,4 @@
-"""Streamlit chatbot front‑end for BreedSpotter."""
+"""Streamlit chatbot front-end for BreedSpotter."""
 from __future__ import annotations
 
 import io
@@ -14,9 +14,11 @@ from breedspotter.llm import describe_breed
 st.set_page_config(page_title="BreedSpotter 🐶", page_icon="🐾")
 
 st.title("🐾 BreedSpotter")
-st.markdown("Prześlij zdjęcie psa, a powiem Ci, jaka to rasa — i opowiem o niej w kilku zdaniach.")
+st.markdown(
+    "Prześlij zdjęcie psa, a powiem Ci, jaka to rasa — i opowiem o niej w kilku zdaniach."
+)
 
-# Lazy init
+# Lazy init
 if "_init" not in st.session_state:
     st.session_state._init = True
     _df, st.session_state.breeds = load_metadata()
@@ -28,15 +30,23 @@ if uploaded:
     with st.spinner("Analizuję obraz…"):
         img = Image.open(io.BytesIO(uploaded.read())).convert("RGB")
         breed, prob, ranked = st.session_state.clf.predict(img)
-    st.image(img, caption=f"Najbardziej prawdopodobna rasa: **{breed}** ({prob*100:.1f}%)", use_container_width=True)
 
-    # Generate / fetch description
+    # Wyświetl obraz z opisem; zamiast use_container_width używamy width
+    st.image(
+        img,
+        caption=f"Najbardziej prawdopodobna rasa: **{breed}** ({prob*100:.1f}%)",
+        width=700,
+    )
+
+    # Generate / fetch description
     profile = st.session_state.profiles.get(breed, "Brak opisu w bazie.")
     description = describe_breed(breed, profile)
 
     st.markdown(f"### Opis rasy: {breed}")
     st.write(description)
 
-    if st.toggle("Pokaż 5 najlepszych typów"):
+    # Zamiast st.toggle używamy checkbox
+    show_top5 = st.checkbox("Pokaż 5 najlepszych typów", key="show_top5")
+    if show_top5:
         for b, p in sorted(ranked, key=lambda t: t[1], reverse=True)[:5]:
             st.write(f"• {b}: {p*100:.1f}%")
